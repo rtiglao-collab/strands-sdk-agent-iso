@@ -12,4 +12,6 @@ build/
 venv/
 memory/users/**
 !memory/users/.gitkeep
+# Local credential files (e.g. Google service account JSON) — never commit
+secrets/**/*.json
 *.log

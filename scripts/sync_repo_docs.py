@@ -117,6 +117,7 @@ def _manifest_paths(repo: Path, tracked: list[str] | None) -> list[str]:
         "knowledge/",
         "skills/",
         "memory/",
+        "secrets/",
         "scripts/",
         "tests/",
         ".cursor/rules/",

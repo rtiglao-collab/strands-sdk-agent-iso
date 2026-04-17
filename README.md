@@ -69,15 +69,9 @@ Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs r
 
 ## Model providers
 
-**Default:** **Amazon Bedrock Runtime** via Strands **`BedrockModel`** (Converse / ConverseStream) — the same path Strands documents as native Bedrock support and as the **`Agent()` default** when no model is passed. See the official guide: [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/). Configure the normal **AWS credential chain** (profile, env vars, instance role). Optional tuning:
+**Default:** **Anthropic Claude Sonnet** via direct API (`strands.models.anthropic.AnthropicModel`), model id **`claude-sonnet-4-6`** (override with **`ISO_AGENT_ANTHROPIC_MODEL_ID`**). Set **`ANTHROPIC_API_KEY`** in your environment (standard Anthropic env name; not prefixed with `ISO_AGENT_`). Optional **`ISO_AGENT_ANTHROPIC_MAX_TOKENS`** (default `4096`).
 
-- **`ISO_AGENT_BEDROCK_MODEL_ID`** — foundation model id or **inference profile** id (if unset, Strands picks a regional default; see upstream `BedrockModel`).
-- **`ISO_AGENT_BEDROCK_REGION_NAME`** — e.g. `us-east-1` (if unset, uses `AWS_REGION` / session default).
-- **`ISO_AGENT_BEDROCK_MAX_TOKENS`** — optional max tokens for Converse.
-
-This path uses **Bedrock Runtime** for your Strands `Agent` loop. It is **not** the separate **Bedrock Agents** “invoke agent” API (managed agent + alias id); that service would require a different client and is not wired in `default_model.py`.
-
-**Anthropic direct (optional):** set **`ISO_AGENT_LLM_PROVIDER=anthropic`**, install **`pip install -e ".[anthropic]"`**, set **`ANTHROPIC_API_KEY`**, and optionally **`ISO_AGENT_ANTHROPIC_MODEL_ID`** / **`ISO_AGENT_ANTHROPIC_MAX_TOKENS`**.
+**Bedrock instead:** set **`ISO_AGENT_LLM_PROVIDER=bedrock`** and configure AWS credentials; all `Agent` instances use **`BedrockModel()`** (Strands default).
 
 **OpenAI (optional extra):** `pip install -e ".[openai]"` if you switch factories or models in custom code.
 
@@ -95,9 +89,11 @@ See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, sc
 
 **Neuuf / ISO roadmap:** **`docs/NEUUF_ISO_PHASE_PLAN.md`** (phases for Drive, Notion, Google Chat, Perplexity, gap pipeline). **Samples map:** **`references/STRANDS_SAMPLES.md`** (`/Users/Rj/sdk-python/samples`).
 
+**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step Drive, Notion, and Perplexity; Chat remains in this README when you deploy ingress.
+
 **Perplexity (Phase 2):** set `PERPLEXITY_API_KEY` and `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`, with Docker running, so the **researcher** sub-agent loads the `mcp/perplexity-ask` image (same pattern as `samples/.../05-personal-assistant/search_assistant.py`). Default transport is `disabled` so environments without Docker stay safe.
 
-**Google Drive (Phase 3):** `pip install iso-agent[drive]`, set `GOOGLE_APPLICATION_CREDENTIALS` to a **service account JSON** with **Drive read-only** access, then:
+**Google Drive (Phase 3):** `pip install iso-agent[drive]`, set `GOOGLE_APPLICATION_CREDENTIALS` to a **service account JSON** with **Drive read-only** access. For local dev you can keep the key under **`secrets/google/*.json`** (gitignored; see **`secrets/README.md`**), then:
 
 - `ISO_AGENT_DRIVE_ENABLED=true`
 - `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` — comma-separated folder IDs (listing + parent checks)
