@@ -54,6 +54,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 
 - `.cursor/rules/core-scope.mdc`
 - `.cursor/rules/discovery-first.mdc`
+- `.cursor/rules/git-explicit-push.mdc`
 - `.cursor/rules/iso9001-product.mdc`
 - `.cursor/rules/python-strands.mdc`
 - `.cursor/rules/repo-maintenance.mdc`

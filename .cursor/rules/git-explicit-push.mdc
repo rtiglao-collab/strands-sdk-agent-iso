@@ -1,0 +1,10 @@
+---
+description: Do not push to GitHub or publish remotes unless the user explicitly asks
+alwaysApply: true
+---
+
+# Git: no push unless explicit
+
+- **Do not** run `git push`, `git push --force`, or equivalent (including **`gh repo create ... --push`**) unless the user **clearly asks** to push or publish to GitHub (or another remote).
+- **Allowed without asking:** local `git commit`, `git status`, `git diff`, `git log`, branch/rebase work that stays on disk, and telling the user what command to run if they want to publish.
+- If a task is done and pushing would be natural, **stop after commit** (or after changes) and say the branch is ready; offer to push **only** if they ask.

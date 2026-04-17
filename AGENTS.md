@@ -2,7 +2,7 @@
 
 Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them for this workspace.
 
-**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`).
+**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`), git push only when asked (`git-explicit-push.mdc`).
 
 **When editing Python under `src/`:** `python-strands.mdc` (layers, Strands usage, imports).
 
