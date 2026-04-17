@@ -66,7 +66,7 @@ Then set model in `src/iso_agent/config.py` or environment variables you add the
 
 ## Upstream SDK
 
-This project does not vendor the Strands SDK. See `references/STRANDS_SDK.md` for the canonical repository and reading order.
+This project does not vendor the Strands SDK. See `references/STRANDS_SDK.md` for the canonical repository and reading order, and `references/STRANDS_AWS_INTRO_BLOG.md` for a short summary of the [AWS Open Source Strands announcement](https://aws.amazon.com/blogs/opensource/introducing-strands-agents-an-open-source-ai-agents-sdk/) (best-practice context alongside the SDK checkout).
 
 ## Cursor (AI) rules
 
@@ -74,4 +74,4 @@ See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, sc
 
 **Bootstrap record:** **`docs/INITIAL_SETUP.md`** summarizes what was built initially and ends with an **LLM prompt** you can reuse to recreate the same setup elsewhere.
 
-**Strands SDK on disk:** use the local clone path in **`references/STRANDS_SDK.md`** as the canonical place to read implementation patterns (`@tool`, hooks, MCP, multiagent). Add that folder to this Cursor workspace (multi-root) when you want full SDK context while editing `iso_agent`.
+**Strands SDK on disk:** use the local clone path in **`references/STRANDS_SDK.md`** as the canonical place to read implementation patterns (`@tool`, hooks, MCP, multiagent). Add that folder to this Cursor workspace (multi-root) when you want full SDK context while editing `iso_agent`. Pair it with **`references/STRANDS_AWS_INTRO_BLOG.md`** when you want the high-level model/tools/prompt and production framing from AWS’s intro post.

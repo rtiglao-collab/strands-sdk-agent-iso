@@ -10,6 +10,10 @@ Use this on-disk clone when implementing or reviewing Strands patterns (prefer r
 
 In Cursor, add that directory to the **same workspace** (multi-root) alongside this repo when you want full SDK navigation and search. If the clone moves, update this path here only, then regenerate `docs/generated/INFRASTRUCTURE.md` if your process requires it (this file is under `references/` and is listed in the manifest).
 
+## Official narrative (AWS)
+
+For **Strands product framing and best-practice themes** (model + tools + prompt, model-driven loop, MCP, multi-agent, production and observability angles), read the AWS Open Source announcement and the companion summary in **`references/STRANDS_AWS_INTRO_BLOG.md`** (link: https://aws.amazon.com/blogs/opensource/introducing-strands-agents-an-open-source-ai-agents-sdk/).
+
 Suggested reading order for this host layout (paths relative to that checkout):
 
 1. `AGENTS.md` — contributor and AI patterns for the SDK repo  

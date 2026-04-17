@@ -2,7 +2,7 @@
 
 Before adding new markdown under `docs/`, check whether **`docs/ARCHITECTURE.md`**, **`docs/DOC_MAINTENANCE.md`**, **`docs/INITIAL_SETUP.md`**, or **`README.md`** should gain a section instead. Cursor rule **`discovery-first.mdc`** covers the same habit for code and docs.
 
-Strands implementation patterns: **`references/STRANDS_SDK.md`** holds the **local `sdk-python` checkout path** and reading order—update only there if the clone moves.
+Strands implementation patterns: **`references/STRANDS_SDK.md`** holds the **local `sdk-python` checkout path** and reading order—update only there if the clone moves. **`references/STRANDS_AWS_INTRO_BLOG.md`** summarizes the [AWS Strands intro post](https://aws.amazon.com/blogs/opensource/introducing-strands-agents-an-open-source-ai-agents-sdk/) for model/tools/prompt framing (no need to edit unless the summary drifts from what you want assistants to remember).
 
 ## Generated inventory (required)
 
