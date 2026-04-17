@@ -12,37 +12,63 @@ Then commit this file. Pre-commit runs `sync_repo_docs.py --check`.
 
 | Script | Target |
 |--------|--------|
+| `iso-chat-webhook` | `iso_agent.scripts.iso_chat_webhook:main` |
 | `iso-demo-calculator` | `iso_agent.scripts.demo_calculator:main` |
 | `iso-mcp-stdio` | `iso_agent.mcp.stdio_server:main` |
+| `iso-neuuf-coordinator` | `iso_agent.scripts.neuuf_coordinator_cli:main` |
 
 ## Optional dependency groups
 
-`anthropic`, `dev`, `openai`
+`anthropic`, `chat`, `dev`, `drive`, `notion`, `openai`
 
 ## Package tree (`src/iso_agent/`)
 
 ```text
 iso_agent/
+├── adapters
+│   ├── __init__.py
+│   └── google_chat_app.py
 ├── l1_router
 │   ├── __init__.py
 │   ├── context.py
+│   ├── google_chat.py
 │   └── handler.py
 ├── l2_user
 │   ├── __init__.py
+│   ├── audit_schedule.py
+│   ├── calendar_store.py
+│   ├── gap_store.py
 │   ├── memory_layout.py
 │   └── user_scope.py
 ├── l3_runtime
+│   ├── integrations
+│   │   ├── __init__.py
+│   │   ├── drive_client.py
+│   │   ├── notion_client.py
+│   │   └── perplexity.py
+│   ├── team
+│   │   ├── __init__.py
+│   │   ├── coordinator.py
+│   │   └── subagents.py
 │   ├── tools
-│   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── audit_tools.py
+│   │   ├── calendar_tools.py
+│   │   ├── drive_tools.py
+│   │   ├── gap_tools.py
+│   │   └── notion_tools.py
 │   ├── __init__.py
 │   ├── agents.py
+│   ├── prompts.py
 │   └── specialists.py
 ├── mcp
 │   ├── __init__.py
 │   └── stdio_server.py
 ├── scripts
 │   ├── __init__.py
-│   └── demo_calculator.py
+│   ├── demo_calculator.py
+│   ├── iso_chat_webhook.py
+│   └── neuuf_coordinator_cli.py
 ├── __init__.py
 ├── config.py
 └── paths.py

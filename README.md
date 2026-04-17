@@ -7,6 +7,7 @@ Layered layout for building a production-style agent: inbound routing (L1), per-
 | Path | Role |
 |------|------|
 | `src/iso_agent/l1_router/` | Inbound events, identity-derived `user_key`, thread keys, “what runs next” |
+| `src/iso_agent/adapters/` | HTTP ingress (e.g. Google Chat webhook) |
 | `src/iso_agent/l2_user/` | Per-user memory roots, session paths, profile helpers |
 | `src/iso_agent/l3_runtime/` | `Agent` factories, specialist graphs, tool registration |
 | `src/iso_agent/mcp/` | Optional stdio MCP server for local tools |
@@ -24,6 +25,7 @@ strands-sdk-agent-iso/
 ├── references/
 ├── skills/
 ├── src/iso_agent/
+│   ├── adapters/
 │   ├── l1_router/
 │   ├── l2_user/
 │   ├── l3_runtime/tools/
@@ -52,7 +54,9 @@ VS Code / Cursor: run the task **“Sync repo docs (INFRASTRUCTURE.md)”** from
 ## Commands
 
 - Demo calculator (Bedrock default unless you change the agent factory): `iso-demo-calculator` (see `iso_agent.l1_router.handler` for the L1 entrypoint)
+- Neuuf ISO coordinator (agents-as-tools, Phase 1): `iso-neuuf-coordinator` — or set `ISO_AGENT_PRIMARY_MODE=neuuf` and use any path that calls `handle_user_message`
 - Local MCP stdio server: `iso-mcp-stdio`
+- Google Chat webhook (Phase 5): `iso-chat-webhook` — requires `pip install -e ".[chat]"` or dev extras (FastAPI + uvicorn)
 
 ## Model providers
 
@@ -73,5 +77,41 @@ This project does not vendor the Strands SDK. See `references/STRANDS_SDK.md` fo
 See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, scope, security, ISO-oriented behavior, repo maintenance (doc sync + hooks), and Python layout conventions.
 
 **Bootstrap record:** **`docs/INITIAL_SETUP.md`** summarizes what was built initially and ends with an **LLM prompt** you can reuse to recreate the same setup elsewhere.
+
+**Neuuf / ISO roadmap:** **`docs/NEUUF_ISO_PHASE_PLAN.md`** (phases for Drive, Notion, Google Chat, Perplexity, gap pipeline). **Samples map:** **`references/STRANDS_SAMPLES.md`** (`/Users/Rj/sdk-python/samples`).
+
+**Perplexity (Phase 2):** set `PERPLEXITY_API_KEY` and `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`, with Docker running, so the **researcher** sub-agent loads the `mcp/perplexity-ask` image (same pattern as `samples/.../05-personal-assistant/search_assistant.py`). Default transport is `disabled` so environments without Docker stay safe.
+
+**Google Drive (Phase 3):** `pip install iso-agent[drive]`, set `GOOGLE_APPLICATION_CREDENTIALS` to a **service account JSON** with **Drive read-only** access, then:
+
+- `ISO_AGENT_DRIVE_ENABLED=true`
+- `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` — comma-separated folder IDs (listing + parent checks)
+- Optional `ISO_AGENT_DRIVE_ALLOWED_FILE_IDS` — extra file IDs allowed for `drive_read_document`
+- Optional `ISO_AGENT_DRIVE_MAX_LIST` (default 25, max 100)
+
+The Neuuf coordinator gains **`drive_list_folder`** and **`drive_read_document`** tools (allowlist-enforced).
+
+**Notion QMS (Phase 4):** `pip install iso-agent[notion]`, set **`NOTION_TOKEN`** (Notion internal integration secret), then:
+
+- `ISO_AGENT_NOTION_ENABLED=true`
+- `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` — comma-separated **page** UUIDs where **`notion_create_qms_draft`** may create children
+- `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` — comma-separated **page** UUIDs readable via **`notion_read_page`**
+
+Drafts include optional **Drive evidence** line when you pass `drive_link` into `notion_create_qms_draft`.
+
+**Calendar & audits (Phase 7):** Per-user **local SQLite** calendar (`iso_calendar_*` under `memory/users/<user_key>/calendar/`) and **audit cadence** file (`audit_*` tools, `memory/.../audits/schedule.json`). **`current_time`** is on the coordinator for relative dates. **Not** Google Calendar or registrar automation—see **`docs/AUDIT_FLOW.md`**.
+
+**Gap pipeline (Phase 6):** Coordinator tools **`gap_append_record`** and **`gap_list_recent`** write/read **`memory/users/<user_key>/gaps/gaps.jsonl`** (one JSON object per line). Use after **`neuuf_gap_analyst`** when the user wants durable gap rows; handoff patterns live in **`docs/templates/gap_handoff_chat.md`** and **`docs/templates/gap_handoff_notion.md`**.
+
+**Google Chat (Phase 5):** `pip install iso-agent[chat]` (or use `.[dev]` which includes FastAPI + uvicorn for tests). Configure a Google Chat app **HTTP endpoint** pointing at your deployment’s `POST /google-chat`.
+
+- **`ISO_AGENT_CHAT_WEBHOOK_SECRET`** — shared secret; each request must include header **`x-iso-agent-chat-secret`** with the same value (configure your proxy or Cloud Run to inject it).
+- **`ISO_AGENT_CHAT_ALLOW_INSECURE=true`** — allows startup with **no** secret (local dev only; logs a warning).
+- **`ISO_AGENT_CHAT_DEDUPE_TTL_SECONDS`** — in-memory duplicate-event window (default `300`, bounded `10..86400`) to tolerate webhook retries.
+- Run: **`iso-chat-webhook`** (binds `0.0.0.0`, port from **`PORT`** default `8080`). **`GET /healthz`** for probes.
+- **`GET /chat-metrics`** returns process-local in-memory counters (`received`, `duplicate`, `onboarding`, `parse_failed`, `turn_failed`, `turn_success`) for lightweight operational checks.
+- Every response includes **`x-iso-agent-request-id`** (derived from inbound `x-iso-agent-request-id` / `x-request-id` when provided, else generated), and webhook logs include this ID for request correlation.
+- **DM** (`space.type` `DM`) uses the full Neuuf coordinator; **shared rooms** (`ROOM` / `SPACE`) append stricter **`google_chat_room_suffix`** instructions (shorter, group-safe replies).
+- **`ADDED_TO_SPACE`** events return a short onboarding message (no L3 turn execution).
 
 **Strands SDK on disk:** use the local clone path in **`references/STRANDS_SDK.md`** as the canonical place to read implementation patterns (`@tool`, hooks, MCP, multiagent). Add that folder to this Cursor workspace (multi-root) when you want full SDK context while editing `iso_agent`.

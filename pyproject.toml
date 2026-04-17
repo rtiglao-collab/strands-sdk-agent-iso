@@ -20,17 +20,33 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["strands-agents[openai]"]
 anthropic = ["strands-agents[anthropic]"]
+drive = [
+    "google-api-python-client>=2.130.0,<3.0.0",
+    "google-auth>=2.30.0,<3.0.0",
+]
+notion = [
+    "notion-client>=2.2.1,<3.0.0",
+]
+chat = [
+    "fastapi>=0.115.0,<1.0.0",
+    "uvicorn[standard]>=0.27.0,<1.0.0",
+]
 dev = [
     "pytest>=8.0.0,<10.0.0",
     "pytest-asyncio>=0.24.0,<1.0.0",
     "ruff>=0.8.0,<1.0.0",
     "mypy>=1.11.0,<2.0.0",
     "pre-commit>=4.0.0,<5.0.0",
+    "fastapi>=0.115.0,<1.0.0",
+    "uvicorn[standard]>=0.27.0,<1.0.0",
+    "httpx>=0.27.0,<1.0.0",
 ]
 
 [project.scripts]
 iso-demo-calculator = "iso_agent.scripts.demo_calculator:main"
 iso-mcp-stdio = "iso_agent.mcp.stdio_server:main"
+iso-neuuf-coordinator = "iso_agent.scripts.neuuf_coordinator_cli:main"
+iso-chat-webhook = "iso_agent.scripts.iso_chat_webhook:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -51,7 +67,15 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["botocore.*", "strands_tools.*"]
+module = [
+    "botocore.*",
+    "strands_tools.*",
+    "google.*",
+    "googleapiclient.*",
+    "notion_client.*",
+    "fastapi.*",
+    "uvicorn.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

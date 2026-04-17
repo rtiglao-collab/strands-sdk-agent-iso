@@ -12,3 +12,6 @@ alwaysApply: false
 - **Typing**: Keep type hints on public functions; run `mypy` / `ruff` when changing Python.
 - **Logging**: Follow Strands-style structured logging if you add logs (`key=<%s> | message`, `%s` not f-strings in log calls).
 - **New libraries**: follow **`discovery-first.mdc`** — use Strands/MCP/stdlib and existing AWS patterns before adding dependencies.
+- **Perplexity MCP**: `l3_runtime/integrations/perplexity.py` — opt-in Docker; never log `PERPLEXITY_API_KEY`.
+- **Google Drive**: `l3_runtime/tools/drive_tools.py` — allowlist-only; install `iso-agent[drive]`; never log file contents; use `GOOGLE_APPLICATION_CREDENTIALS` (service account JSON path).
+- **Notion**: `l3_runtime/tools/notion_tools.py` — allowlist-only; install `iso-agent[notion]`; never log `NOTION_TOKEN` or full page bodies in application logs.

@@ -14,6 +14,16 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `docs/generated/INFRASTRUCTURE.md` | **Auto-generated** inventory — run `python scripts/sync_repo_docs.py` after structural changes; never edit by hand |
 | `docs/DOC_MAINTENANCE.md` | Checklist for regenerating docs and running hooks |
 | `docs/INITIAL_SETUP.md` | Bootstrap narrative + LLM prompt to reproduce this repo’s initial layout |
+| `docs/NEUUF_ISO_PHASE_PLAN.md` | Phased roadmap (Drive, Notion, Chat, Perplexity, gap pipeline) |
+| `references/STRANDS_SAMPLES.md` | Local samples repo path + map sample → Neuuf use case |
+| `src/iso_agent/l3_runtime/tools/drive_tools.py` | Phase 3 Drive read tools (allowlist + service account) |
+| `src/iso_agent/l3_runtime/tools/notion_tools.py` | Phase 4 Notion QMS draft + read (allowlist + `NOTION_TOKEN`) |
+| `src/iso_agent/l1_router/google_chat.py` + `adapters/google_chat_app.py` | Phase 5 Google Chat parse + HTTP webhook (`iso-chat-webhook`) |
+| `src/iso_agent/l2_user/gap_store.py` + `l3_runtime/tools/gap_tools.py` | Phase 6 append-only gap JSONL + coordinator tools |
+| `docs/templates/gap_handoff_*.md` | Phase 6 Chat / Notion draft patterns from gap records |
+| `docs/AUDIT_FLOW.md` | Phase 7 audit cadence + local calendar boundaries vs human-only |
+| `src/iso_agent/l2_user/calendar_store.py` + `l3_runtime/tools/calendar_tools.py` | Phase 7 per-user SQLite calendar |
+| `src/iso_agent/l2_user/audit_schedule.py` + `l3_runtime/tools/audit_tools.py` | Phase 7 audit cadence JSON + reminder helpers |
 | `docs/CAPABILITIES.template.md` | Copy to `CAPABILITIES.md` when you track real product capabilities |
 
 Fill `docs/CAPABILITIES.template.md` (or a derived `CAPABILITIES.md`) so agent claims stay aligned with what is actually wired.

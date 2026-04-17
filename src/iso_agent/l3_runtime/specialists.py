@@ -12,4 +12,7 @@ Keep imports lazy if optional extras are not installed for all environments.
 
 def describe_specialist_plan() -> str:
     """Placeholder until graphs are wired."""
-    return "Add specialist agents under l3_runtime/ and compose them with GraphBuilder or Swarm."
+    return (
+        "Phase 1 specialists live under l3_runtime/team/ (agents-as-tools). "
+        "For gap→liaison→meeting pipelines see docs/NEUUF_ISO_PHASE_PLAN.md (GraphBuilder / Swarm)."
+    )
