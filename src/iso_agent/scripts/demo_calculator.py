@@ -1,7 +1,5 @@
 """Demo: scoped primary agent with calculator tool (migrated from root `agent.py`)."""
 
-from botocore.exceptions import NoCredentialsError
-
 from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l1_router.handler import handle_user_message
 from iso_agent.l2_user import UserScope
@@ -13,10 +11,10 @@ def main() -> None:
     scope = UserScope.from_context(ctx)
     try:
         print(handle_user_message(scope, "What is the square root of 1764"))
-    except NoCredentialsError:
+    except Exception as exc:
         print(
-            "Missing AWS credentials for the default Bedrock model. "
-            "Configure credentials or install another model extra and set the model on Agent."
+            f"Model call failed: {exc}. Set ANTHROPIC_API_KEY for default Anthropic Sonnet, or "
+            "ISO_AGENT_LLM_PROVIDER=bedrock with AWS credentials."
         )
 
 

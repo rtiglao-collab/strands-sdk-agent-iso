@@ -48,7 +48,12 @@ iso_agent/
 │   │   └── perplexity.py
 │   ├── team
 │   │   ├── __init__.py
+│   │   ├── comms_tool.py
 │   │   ├── coordinator.py
+│   │   ├── gap_analyst_tool.py
+│   │   ├── governance_tool.py
+│   │   ├── researcher_tool.py
+│   │   ├── specialist_base.py
 │   │   └── subagents.py
 │   ├── tools
 │   │   ├── __init__.py
@@ -59,6 +64,7 @@ iso_agent/
 │   │   └── notion_tools.py
 │   ├── __init__.py
 │   ├── agents.py
+│   ├── default_model.py
 │   ├── prompts.py
 │   └── specialists.py
 ├── mcp
@@ -90,13 +96,23 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `AGENTS.md`
 - `README.md`
 - `docs/ARCHITECTURE.md`
+- `docs/AUDIT_FLOW.md`
 - `docs/CAPABILITIES.template.md`
 - `docs/DOC_MAINTENANCE.md`
 - `docs/INITIAL_SETUP.md`
+- `docs/NEUUF_ISO_PHASE_PLAN.md`
 - `docs/generated/INFRASTRUCTURE.md`
+- `docs/templates/gap_handoff_chat.md`
+- `docs/templates/gap_handoff_notion.md`
 - `knowledge/README.md`
+- `knowledge/agents/comms_coordinator.md`
 - `knowledge/agents/dev_builder.md`
+- `knowledge/agents/gap_analyst.md`
+- `knowledge/agents/google_chat_room_suffix.md`
+- `knowledge/agents/governance_evidence.md`
+- `knowledge/agents/neuuf_coordinator.md`
 - `knowledge/agents/primary.md`
+- `knowledge/agents/researcher.md`
 - `memory/README.md`
 - `memory/users/.gitkeep`
 - `pyproject.toml`
@@ -104,25 +120,64 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `references/MCP_CLIENT_ARCHITECTURE_from_strands_sdk.md`
 - `references/STRANDS_AWS_INTRO_BLOG.md`
 - `references/STRANDS_OFFICIAL_DOCS.md`
+- `references/STRANDS_SAMPLES.md`
 - `references/STRANDS_SDK.md`
 - `scripts/sync_repo_docs.py`
 - `skills/README.md`
 - `src/iso_agent/__init__.py`
+- `src/iso_agent/adapters/__init__.py`
+- `src/iso_agent/adapters/google_chat_app.py`
 - `src/iso_agent/config.py`
 - `src/iso_agent/l1_router/__init__.py`
 - `src/iso_agent/l1_router/context.py`
+- `src/iso_agent/l1_router/google_chat.py`
 - `src/iso_agent/l1_router/handler.py`
 - `src/iso_agent/l2_user/__init__.py`
+- `src/iso_agent/l2_user/audit_schedule.py`
+- `src/iso_agent/l2_user/calendar_store.py`
+- `src/iso_agent/l2_user/gap_store.py`
 - `src/iso_agent/l2_user/memory_layout.py`
 - `src/iso_agent/l2_user/user_scope.py`
 - `src/iso_agent/l3_runtime/__init__.py`
 - `src/iso_agent/l3_runtime/agents.py`
+- `src/iso_agent/l3_runtime/default_model.py`
+- `src/iso_agent/l3_runtime/integrations/__init__.py`
+- `src/iso_agent/l3_runtime/integrations/drive_client.py`
+- `src/iso_agent/l3_runtime/integrations/notion_client.py`
+- `src/iso_agent/l3_runtime/integrations/perplexity.py`
+- `src/iso_agent/l3_runtime/prompts.py`
 - `src/iso_agent/l3_runtime/specialists.py`
+- `src/iso_agent/l3_runtime/team/__init__.py`
+- `src/iso_agent/l3_runtime/team/comms_tool.py`
+- `src/iso_agent/l3_runtime/team/coordinator.py`
+- `src/iso_agent/l3_runtime/team/gap_analyst_tool.py`
+- `src/iso_agent/l3_runtime/team/governance_tool.py`
+- `src/iso_agent/l3_runtime/team/researcher_tool.py`
+- `src/iso_agent/l3_runtime/team/specialist_base.py`
+- `src/iso_agent/l3_runtime/team/subagents.py`
 - `src/iso_agent/l3_runtime/tools/__init__.py`
+- `src/iso_agent/l3_runtime/tools/audit_tools.py`
+- `src/iso_agent/l3_runtime/tools/calendar_tools.py`
+- `src/iso_agent/l3_runtime/tools/drive_tools.py`
+- `src/iso_agent/l3_runtime/tools/gap_tools.py`
+- `src/iso_agent/l3_runtime/tools/notion_tools.py`
 - `src/iso_agent/mcp/__init__.py`
 - `src/iso_agent/mcp/stdio_server.py`
 - `src/iso_agent/paths.py`
 - `src/iso_agent/scripts/__init__.py`
 - `src/iso_agent/scripts/demo_calculator.py`
+- `src/iso_agent/scripts/iso_chat_webhook.py`
+- `src/iso_agent/scripts/neuuf_coordinator_cli.py`
+- `tests/test_default_model.py`
+- `tests/test_drive_tools.py`
+- `tests/test_gap_store.py`
+- `tests/test_gap_tools.py`
+- `tests/test_google_chat_app.py`
+- `tests/test_google_chat_parse.py`
 - `tests/test_memory_layout.py`
+- `tests/test_neuuf_coordinator_cli.py`
+- `tests/test_notion_tools.py`
+- `tests/test_perplexity.py`
+- `tests/test_phase7_calendar_audit.py`
+- `tests/test_prompts_and_mode.py`
 - `tests/test_sync_repo_docs.py`

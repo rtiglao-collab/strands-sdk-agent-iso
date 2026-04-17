@@ -35,10 +35,10 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 
 **Deliverables:**
 
-- `l3_runtime/team/` coordinator factory + `build_specialist_tools(scope)`.
+- `l3_runtime/team/` coordinator factory + `build_specialist_tools(scope)` (one module per specialist tool; see `researcher_tool.py`, `governance_tool.py`, `gap_analyst_tool.py`, `comms_tool.py`, `specialist_base.py`).
 - Prompts: `neuuf_coordinator`, `researcher`, `governance_evidence`, `gap_analyst`, `comms_coordinator`.
 - `ISO_AGENT_PRIMARY_MODE=neuuf` switches L1 handler from demo calculator to coordinator (`Settings.primary_mode` in `iso_agent.config`).
-- CLI: `iso-neuuf-coordinator` (one-shot or short loop).
+- CLI: `iso-neuuf-coordinator` (interactive REPL by default; `--query` for one shot; `STRANDS_TOOL_CONSOLE_MODE` enabled unless `--plain-console`).
 - Tests: prompt loader + mode wiring.
 - **Docs:** this file; `references/STRANDS_SAMPLES.md`; update `ARCHITECTURE.md` / `AGENTS.md` links.
 
@@ -52,7 +52,7 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 
 - `src/iso_agent/l3_runtime/integrations/perplexity.py` — singleton `MCPClient`, `get_perplexity_mcp_tools()`, `atexit` shutdown, test reset helper.
 - `ISO_AGENT_PERPLEXITY_TRANSPORT=docker` **and** `PERPLEXITY_API_KEY` required to start MCP; default transport `disabled` so CI and laptops without Docker do not auto-pull.
-- `l3_runtime/team/subagents.py` — researcher inner `Agent` receives MCP tools when available.
+- `l3_runtime/team/researcher_tool.py` — researcher inner `Agent` receives MCP tools when available (composed with other specialists in `team/subagents.py`).
 - Logging uses structured messages **without** secret values.
 
 **Exit criteria:** Tests cover configured/disabled/fake client paths; `docs/CAPABILITIES.template.md` updated; README documents env vars.

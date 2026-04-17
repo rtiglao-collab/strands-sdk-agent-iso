@@ -4,6 +4,7 @@ from strands import Agent
 from strands_tools import calculator
 
 from iso_agent.l2_user.user_scope import UserScope
+from iso_agent.l3_runtime.default_model import get_default_model
 
 
 def default_tools_for_scope(scope: UserScope) -> list[object]:
@@ -20,7 +21,11 @@ def create_demo_agent(scope: UserScope) -> Agent:
         f"thread_key={scope.thread_key}. "
         "Do not merge state across users; use scoped paths when writing files."
     )
-    return Agent(tools=default_tools_for_scope(scope), system_prompt=system_prompt)
+    return Agent(
+        model=get_default_model(),
+        tools=default_tools_for_scope(scope),
+        system_prompt=system_prompt,
+    )
 
 
 def create_neuuf_coordinator_agent(scope: UserScope) -> Agent:

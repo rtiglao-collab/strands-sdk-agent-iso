@@ -25,6 +25,8 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `src/iso_agent/l2_user/calendar_store.py` + `l3_runtime/tools/calendar_tools.py` | Phase 7 per-user SQLite calendar |
 | `src/iso_agent/l2_user/audit_schedule.py` + `l3_runtime/tools/audit_tools.py` | Phase 7 audit cadence JSON + reminder helpers |
 | `docs/CAPABILITIES.template.md` | Copy to `CAPABILITIES.md` when you track real product capabilities |
+| `src/iso_agent/l3_runtime/team/*_tool.py` + `specialist_base.py` | Neuuf specialists as tools (one module per specialist; `subagents.py` aggregates) |
+| `src/iso_agent/l3_runtime/default_model.py` + `config.py` (`llm_provider`, Anthropic ids) | Default Anthropic Claude Sonnet; optional Bedrock via `ISO_AGENT_LLM_PROVIDER` |
 
 Fill `docs/CAPABILITIES.template.md` (or a derived `CAPABILITIES.md`) so agent claims stay aligned with what is actually wired.
 

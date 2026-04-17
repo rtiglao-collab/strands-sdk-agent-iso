@@ -6,6 +6,7 @@ from strands import Agent
 from strands_tools import current_time
 
 from iso_agent.l2_user.user_scope import UserScope
+from iso_agent.l3_runtime.default_model import get_default_model
 from iso_agent.l3_runtime.prompts import load_role_prompt
 from iso_agent.l3_runtime.team.subagents import build_specialist_tools
 from iso_agent.l3_runtime.tools.audit_tools import build_audit_tools
@@ -46,6 +47,7 @@ def build_neuuf_coordinator(
         *build_notion_tools(scope),
     ]
     return Agent(
+        model=get_default_model(),
         system_prompt=system_prompt,
         tools=tools,
         trace_attributes={"user.key": scope.user_key, "thread.key": scope.thread_key},

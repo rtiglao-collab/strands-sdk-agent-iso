@@ -13,7 +13,7 @@
 
 ### Neuuf coordinator team (Phase 1)
 
-The **Neuuf ISO coordinator** lives under **`src/iso_agent/l3_runtime/team/`**: a primary `Agent` plus **specialists as tools** (same pattern as `samples/02-samples/05-personal-assistant/`). Prompts are markdown under **`knowledge/agents/`** (`neuuf_coordinator`, `researcher`, `governance_evidence`, `gap_analyst`, `comms_coordinator`). Set `ISO_AGENT_PRIMARY_MODE=neuuf` so **`l1_router/handler.py`** routes to this team, or run **`iso-neuuf-coordinator`** for a dedicated CLI. Roadmap: **`docs/NEUUF_ISO_PHASE_PLAN.md`**.
+The **Neuuf ISO coordinator** lives under **`src/iso_agent/l3_runtime/team/`**: a primary `Agent` plus **specialists as tools** (same pattern as `samples/02-samples/05-personal-assistant/`). Each specialist’s Python wrapper lives in its own module (e.g. **`researcher_tool.py`**); prompts stay markdown under **`knowledge/agents/`** (`neuuf_coordinator`, `researcher`, `governance_evidence`, `gap_analyst`, `comms_coordinator`). Set `ISO_AGENT_PRIMARY_MODE=neuuf` so **`l1_router/handler.py`** routes to this team, or run **`iso-neuuf-coordinator`** for a dedicated interactive CLI (optional `STRANDS_TOOL_CONSOLE_MODE` for clearer tool traces). Roadmap: **`docs/NEUUF_ISO_PHASE_PLAN.md`**.
 
 ## Suggested data flow
 
@@ -53,7 +53,9 @@ Review **`docs/generated/INFRASTRUCTURE.md`** and existing modules before adding
 
 For Strands behavior and conventions, use the **local SDK checkout** path and reading order in **`references/STRANDS_SDK.md`** (keep it in the same Cursor workspace when possible).
 
-**Phase 2 research:** Perplexity MCP lives in **`src/iso_agent/l3_runtime/integrations/perplexity.py`** and is wired into the researcher via **`l3_runtime/team/subagents.py`** (opt-in Docker; see README).
+**Default model:** **`l3_runtime/default_model.py`** (`get_default_model`) — Anthropic Claude Sonnet by default; Bedrock when `ISO_AGENT_LLM_PROVIDER=bedrock`. Coordinator and inner specialists use the same factory.
+
+**Phase 2 research:** Perplexity MCP lives in **`src/iso_agent/l3_runtime/integrations/perplexity.py`** and is wired into the researcher via **`l3_runtime/team/researcher_tool.py`** (aggregated in **`team/subagents.py`**; opt-in Docker; see README).
 
 **Phase 3 Drive:** Read-only tools in **`l3_runtime/tools/drive_tools.py`** with client helpers in **`l3_runtime/integrations/drive_client.py`**; merged on the **coordinator** `Agent` in **`l3_runtime/team/coordinator.py`**. Requires optional `iso-agent[drive]` install and allowlisted folder/file IDs (see README).
 

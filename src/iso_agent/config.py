@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     #: Environment: ``ISO_AGENT_PRIMARY_MODE`` (see ``env_prefix``).
     primary_mode: Literal["demo", "neuuf"] = "demo"
 
+    #: ``anthropic`` = direct Anthropic API (default Claude Sonnet).
+    #: ``bedrock`` = AWS Bedrock default model.
+    llm_provider: Literal["anthropic", "bedrock"] = "anthropic"
+
+    #: Anthropic ``model_id`` (Messages API). Environment: ``ISO_AGENT_ANTHROPIC_MODEL_ID``.
+    anthropic_model_id: str = "claude-sonnet-4-6"
+
+    #: Max tokens for Anthropic generations. Environment: ``ISO_AGENT_ANTHROPIC_MAX_TOKENS``.
+    anthropic_max_tokens: int = 4096
+
     #: ``docker`` + ``PERPLEXITY_API_KEY`` starts Perplexity MCP (Phase 2).
     #: ``disabled`` never opens Docker.
     perplexity_transport: Literal["docker", "disabled"] = "disabled"

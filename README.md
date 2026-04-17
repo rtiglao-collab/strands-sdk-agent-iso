@@ -54,19 +54,28 @@ VS Code / Cursor: run the task **“Sync repo docs (INFRASTRUCTURE.md)”** from
 ## Commands
 
 - Demo calculator (Bedrock default unless you change the agent factory): `iso-demo-calculator` (see `iso_agent.l1_router.handler` for the L1 entrypoint)
-- Neuuf ISO coordinator (agents-as-tools, Phase 1): `iso-neuuf-coordinator` — or set `ISO_AGENT_PRIMARY_MODE=neuuf` and use any path that calls `handle_user_message`
+- **Neuuf ISO coordinator (CLI):** `iso-neuuf-coordinator` — interactive REPL by default; **`--query "..."`** for a single turn. Sets **`STRANDS_TOOL_CONSOLE_MODE=enabled`** automatically (same pattern as Strands `samples/.../05-personal-assistant/` for clearer tool output in the terminal); pass **`--plain-console`** to skip. Requires a configured Strands model (e.g. AWS credentials for default Bedrock). Alternatively set `ISO_AGENT_PRIMARY_MODE=neuuf` and call `handle_user_message` from your own host code.
 - Local MCP stdio server: `iso-mcp-stdio`
-- Google Chat webhook (Phase 5): `iso-chat-webhook` — requires `pip install -e ".[chat]"` or dev extras (FastAPI + uvicorn)
+- **Google Chat (Phase 5):** `iso-chat-webhook` — requires `pip install -e ".[chat]"` or dev extras (FastAPI + uvicorn). Uses the **same** Neuuf coordinator stack as the CLI (`handle_google_chat_turn` → `build_neuuf_coordinator`); configure Chat’s HTTP target to `POST /google-chat` and forward **`x-iso-agent-chat-secret`** (see Chat section below).
+
+### Coordinator: CLI vs Google Chat
+
+| Path | When to use |
+|------|-------------|
+| **`iso-neuuf-coordinator`** | Local iteration, debugging prompts and tools with immediate stdin/stdout |
+| **`iso-chat-webhook`** + Chat app | Real users in DM or spaces; uses ingress adapter + webhook secret + dedupe metrics |
+
+Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs room rules) differs for Chat.
 
 ## Model providers
 
-Install one optional extra, for example:
+**Default:** **Anthropic Claude Sonnet** via direct API (`strands.models.anthropic.AnthropicModel`), model id **`claude-sonnet-4-6`** (override with **`ISO_AGENT_ANTHROPIC_MODEL_ID`**). Set **`ANTHROPIC_API_KEY`** in your environment (standard Anthropic env name; not prefixed with `ISO_AGENT_`). Optional **`ISO_AGENT_ANTHROPIC_MAX_TOKENS`** (default `4096`).
 
-```bash
-pip install -e ".[openai]"
-```
+**Bedrock instead:** set **`ISO_AGENT_LLM_PROVIDER=bedrock`** and configure AWS credentials; all `Agent` instances use **`BedrockModel()`** (Strands default).
 
-Then set model in `src/iso_agent/config.py` or environment variables you add there.
+**OpenAI (optional extra):** `pip install -e ".[openai]"` if you switch factories or models in custom code.
+
+Settings live in **`src/iso_agent/config.py`** (`Settings` / `get_settings()`); the shared factory is **`src/iso_agent/l3_runtime/default_model.py`** (`get_default_model()`).
 
 ## Upstream SDK
 
