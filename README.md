@@ -69,7 +69,7 @@ Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs r
 
 ## Model providers
 
-**Default:** **Amazon Bedrock Runtime** via Strands **`BedrockModel`** (Converse / ConverseStream). Configure the normal **AWS credential chain** (profile, env vars, instance role). Optional tuning:
+**Default:** **Amazon Bedrock Runtime** via Strands **`BedrockModel`** (Converse / ConverseStream) — the same path Strands documents as native Bedrock support and as the **`Agent()` default** when no model is passed. See the official guide: [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/). Configure the normal **AWS credential chain** (profile, env vars, instance role). Optional tuning:
 
 - **`ISO_AGENT_BEDROCK_MODEL_ID`** — foundation model id or **inference profile** id (if unset, Strands picks a regional default; see upstream `BedrockModel`).
 - **`ISO_AGENT_BEDROCK_REGION_NAME`** — e.g. `us-east-1` (if unset, uses `AWS_REGION` / session default).

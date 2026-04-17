@@ -20,7 +20,8 @@ Suggested reading order for this host layout (paths relative to that checkout):
 
 1. `AGENTS.md` — contributor and AI patterns for the SDK repo  
 2. `README.md` — install and quick start  
-3. `src/strands/agent/agent.py` — `Agent` lifecycle  
+3. `src/strands/agent/agent.py` — `Agent` lifecycle (note default `BedrockModel` wiring when `model` is omitted)  
+3b. [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/) (user guide) — IAM, credentials, `BedrockModel`, defaults, troubleshooting  
 4. `src/strands/tools/decorator.py` — `@tool`  
 5. `docs/HOOKS.md` — audit and policy hooks  
 6. `src/strands/session/` — session managers if you persist conversations  

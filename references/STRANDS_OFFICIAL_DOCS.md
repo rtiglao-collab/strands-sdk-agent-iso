@@ -11,6 +11,13 @@ This file is a **stable entry map**; deeper pages are linked from the sections b
 | Site home | https://strandsagents.com/ | Orientation, news, navigation |
 | **Examples overview** | https://strandsagents.com/docs/examples/ | **Index of runnable samples** (Python + TS tables): workflows, graphs, MCP, memory, multi-agent, structured output, multimodal, deployment pointers |
 | User Guide (deploy, ops) | https://strandsagents.com/docs/user-guide/ | Production deployment guides (Bedrock AgentCore, Docker, Lambda, Fargate, App Runner, EC2, EKS, Kubernetes, etc.) and operating guidance linked from the examples page |
+| **Amazon Bedrock (model provider)** | https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/ | **Canonical Strands path on AWS:** `BedrockModel`, boto3 credentials, IAM, `model_id`, troubleshooting — aligns with upstream `Agent()` defaulting to `BedrockModel` |
+
+## Amazon Bedrock — Strands canonical path (not Bedrock Agents invoke)
+
+Strands documents **native Bedrock integration** via **`BedrockModel`** (Bedrock Runtime **Converse**). A basic `Agent()` uses that provider by default with a Claude Sonnet–class Bedrock default in supported regions. **Sonnet (or any FM)** is selected with a Bedrock **`model_id` / inference profile** your account can use — see the [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/) page.
+
+This is **not** the separate **Amazon Bedrock Agents** “invoke agent by id/alias” product unless you add a custom integration. For deployment platforms, the user guide also covers **Bedrock AgentCore** and other targets from the examples index.
 
 ## Examples hub — Python paths (from the official examples index)
 

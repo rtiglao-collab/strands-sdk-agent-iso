@@ -53,7 +53,7 @@ Review **`docs/generated/INFRASTRUCTURE.md`** and existing modules before adding
 
 For Strands behavior and conventions, use the **local SDK checkout** path and reading order in **`references/STRANDS_SDK.md`** (keep it in the same Cursor workspace when possible).
 
-**Default model:** **`l3_runtime/default_model.py`** (`get_default_model`) — **Bedrock Runtime** (`BedrockModel`) by default with optional `ISO_AGENT_BEDROCK_*` overrides; set `ISO_AGENT_LLM_PROVIDER=anthropic` for direct Anthropic. Coordinator and inner specialists use the same factory.
+**Default model:** **`l3_runtime/default_model.py`** (`get_default_model`) — **Bedrock Runtime** (`BedrockModel`) by default with optional `ISO_AGENT_BEDROCK_*` overrides; set `ISO_AGENT_LLM_PROVIDER=anthropic` for direct Anthropic. Matches Strands’ documented **`Agent()` + `BedrockModel`** path; see [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/). Coordinator and inner specialists use the same factory.
 
 **Phase 2 research:** Perplexity MCP lives in **`src/iso_agent/l3_runtime/integrations/perplexity.py`** and is wired into the researcher via **`l3_runtime/team/researcher_tool.py`** (aggregated in **`team/subagents.py`**; opt-in Docker; see README).
 
