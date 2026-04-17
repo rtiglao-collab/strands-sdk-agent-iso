@@ -12,10 +12,11 @@ def main() -> None:
     try:
         print(handle_user_message(scope, "What is the square root of 1764"))
     except Exception as exc:
-        print(
-            f"Model call failed: {exc}. Set ANTHROPIC_API_KEY for default Anthropic Sonnet, or "
-            "ISO_AGENT_LLM_PROVIDER=bedrock with AWS credentials."
+        msg = (
+            f"Model call failed: {exc}. Default: Bedrock Runtime (AWS creds + model access), "
+            "or ISO_AGENT_LLM_PROVIDER=anthropic with ANTHROPIC_API_KEY."
         )
+        print(msg)
 
 
 if __name__ == "__main__":

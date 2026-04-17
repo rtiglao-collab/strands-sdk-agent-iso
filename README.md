@@ -69,9 +69,15 @@ Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs r
 
 ## Model providers
 
-**Default:** **Anthropic Claude Sonnet** via direct API (`strands.models.anthropic.AnthropicModel`), model id **`claude-sonnet-4-6`** (override with **`ISO_AGENT_ANTHROPIC_MODEL_ID`**). Set **`ANTHROPIC_API_KEY`** in your environment (standard Anthropic env name; not prefixed with `ISO_AGENT_`). Optional **`ISO_AGENT_ANTHROPIC_MAX_TOKENS`** (default `4096`).
+**Default:** **Amazon Bedrock Runtime** via Strands **`BedrockModel`** (Converse / ConverseStream). Configure the normal **AWS credential chain** (profile, env vars, instance role). Optional tuning:
 
-**Bedrock instead:** set **`ISO_AGENT_LLM_PROVIDER=bedrock`** and configure AWS credentials; all `Agent` instances use **`BedrockModel()`** (Strands default).
+- **`ISO_AGENT_BEDROCK_MODEL_ID`** — foundation model id or **inference profile** id (if unset, Strands picks a regional default; see upstream `BedrockModel`).
+- **`ISO_AGENT_BEDROCK_REGION_NAME`** — e.g. `us-east-1` (if unset, uses `AWS_REGION` / session default).
+- **`ISO_AGENT_BEDROCK_MAX_TOKENS`** — optional max tokens for Converse.
+
+This path uses **Bedrock Runtime** for your Strands `Agent` loop. It is **not** the separate **Bedrock Agents** “invoke agent” API (managed agent + alias id); that service would require a different client and is not wired in `default_model.py`.
+
+**Anthropic direct (optional):** set **`ISO_AGENT_LLM_PROVIDER=anthropic`**, install **`pip install -e ".[anthropic]"`**, set **`ANTHROPIC_API_KEY`**, and optionally **`ISO_AGENT_ANTHROPIC_MODEL_ID`** / **`ISO_AGENT_ANTHROPIC_MAX_TOKENS`**.
 
 **OpenAI (optional extra):** `pip install -e ".[openai]"` if you switch factories or models in custom code.
 
