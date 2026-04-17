@@ -6,6 +6,7 @@ import argparse
 import os
 import sys
 
+from iso_agent.config import get_settings
 from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l2_user import UserScope
 from iso_agent.l3_runtime.agents import create_neuuf_coordinator_agent
@@ -34,6 +35,15 @@ def main() -> None:
     if not args.plain_console:
         # Show rich UI for tools in CLI
         os.environ["STRANDS_TOOL_CONSOLE_MODE"] = "enabled"
+
+    settings = get_settings()
+    if settings.llm_provider == "anthropic" and not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        print(
+            "Missing ANTHROPIC_API_KEY. Export it (or add to .env) for direct Anthropic, or set "
+            "ISO_AGENT_LLM_PROVIDER=bedrock and configure AWS credentials for Bedrock.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
     ctx = inbound_dm(user_id="local-dev", space="dm", thread="neuuf-cli")
     scope = UserScope.from_context(ctx)
