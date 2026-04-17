@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iso-agent"
+version = "0.1.0"
+description = "Layered Strands agent host (router, per-user scope, shared runtime)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "strands-agents>=1.0.0",
+    "strands-agents-tools>=0.4.0",
+    "mcp[cli]>=1.23.0,<2.0.0",
+    "pydantic>=2.4.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+openai = ["strands-agents[openai]"]
+anthropic = ["strands-agents[anthropic]"]
+dev = [
+    "pytest>=8.0.0,<10.0.0",
+    "pytest-asyncio>=0.24.0,<1.0.0",
+    "ruff>=0.8.0,<1.0.0",
+    "mypy>=1.11.0,<2.0.0",
+    "pre-commit>=4.0.0,<5.0.0",
+]
+
+[project.scripts]
+iso-demo-calculator = "iso_agent.scripts.demo_calculator:main"
+iso-mcp-stdio = "iso_agent.mcp.stdio_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+packages = ["iso_agent"]
+mypy_path = "src"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["botocore.*", "strands_tools.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

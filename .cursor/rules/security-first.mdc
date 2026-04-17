@@ -1,0 +1,13 @@
+---
+description: Security-first defaults for code and agent behavior
+alwaysApply: true
+---
+
+# Security first
+
+- **Secrets**: Never put API keys, tokens, passwords, private keys, or webhooks in source, prompts committed to git, tests, or logs. Use environment variables or the host’s secret store; reference names only in code.
+- **Least privilege**: Tools and connectors should use the narrowest scopes; fail closed when configuration is missing or invalid.
+- **Multi-tenant**: User identity and isolation come from **platform-provided** fields (`user_key`, thread), never from free-text inference. Do not merge paths or state across users.
+- **Logging**: No sensitive payloads in logs; prefer structured logs without secrets.
+- **Dependencies**: Do not add new packages unless the user asked or it is required for a requested fix; prefer stdlib and existing deps.
+- **Commit hygiene**: Assume **`pre-commit`** is installed (`pre-commit install`); gitleaks runs on staged changes. Do not commit secrets or private keys.

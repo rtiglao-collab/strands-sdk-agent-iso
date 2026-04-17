@@ -1,0 +1,13 @@
+---
+description: Scope discipline — minimal changes, explicit asks, clarifying questions
+alwaysApply: true
+---
+
+# Core working agreement
+
+- Before substantive implementation, follow **`discovery-first.mdc`**: review the repo and current stack, reuse or update existing code and docs where sensible, and avoid parallel or duplicate solutions.
+- Implement only what the user asked for. Prefer the smallest diff that satisfies the request.
+- Do not add features, refactors, dependencies, or docs the user did not request.
+- If something is ambiguous, ask **one or two narrow** clarifying questions instead of guessing.
+- If you believe something is **necessary** (safety, security, data loss, correctness) but was not requested, say so briefly **once**, propose the minimal fix, and wait for approval before expanding scope.
+- Match existing layout: L1 `l1_router/`, L2 `l2_user/`, L3 `l3_runtime/`. Put new code in the layer it belongs to.

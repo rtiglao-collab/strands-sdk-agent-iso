@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Sync repo docs (INFRASTRUCTURE.md)",
+      "type": "shell",
+      "command": "python scripts/sync_repo_docs.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pre-commit (all files)",
+      "type": "shell",
+      "command": "pre-commit run --all-files",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

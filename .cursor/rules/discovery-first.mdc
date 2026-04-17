@@ -1,0 +1,27 @@
+---
+description: Review repo and tech stack before coding; extend existing work; avoid duplicate docs
+alwaysApply: true
+---
+
+# Discovery before implementation
+
+## Repo review (do this before substantive changes)
+
+- **Search and read** what already exists: `src/iso_agent/`, `tests/`, `scripts/`, `docs/` (except generated), `knowledge/`, `references/`, `README.md`, `AGENTS.md`, `.cursor/rules/`, and **`docs/generated/INFRASTRUCTURE.md`** for the current layout and entry points.
+- **Strands SDK best practices**: before changing tools, agents, hooks, MCP, or multi-agent code, consult the **local upstream checkout** documented in **`references/STRANDS_SDK.md`** (path and reading order). Prefer mirroring patterns from that tree over inventing new ones.
+- **Prefer reuse or in-place updates** over parallel implementations when it fits L1/L2/L3 and stays readable.
+- **Do not duplicate work**: if a helper, tool, or pattern already solves 80% of the need, extend it rather than adding a second path.
+
+## Documentation (no duplicate markdown sprawl)
+
+- **Update existing docs** with a short new section or revised wording before creating overlapping files (for example, do not add a second architecture doc—extend **`docs/ARCHITECTURE.md`** or **`docs/DOC_MAINTENANCE.md`** as appropriate).
+- **Do not hand-edit** `docs/generated/INFRASTRUCTURE.md`; regenerate with `python scripts/sync_repo_docs.py` after structural edits.
+- **Capabilities** stay in `docs/CAPABILITIES.template.md` / your derived `CAPABILITIES.md`—extend those instead of new capability docs unless the user asks for a split.
+
+## Tech stack order (prefer what we already run on)
+
+1. **This repo**: stdlib, existing modules, `strands-agents` / `strands-agents-tools`, `mcp`, `pydantic` / `pydantic-settings`, patterns already in `pyproject.toml`.
+2. **AWS (when applicable)**: use what the stack already implies (for example Bedrock via Strands defaults, `boto3` where already justified) before proposing new AWS services or accounts.
+3. **New dependencies or services** — only **after** the above: give a **brief** recommendation (what, why, smallest integration) and treat it as out-of-scope unless the user approves.
+
+If the user’s request is already satisfied by existing code or config, say so and point to it instead of rebuilding.

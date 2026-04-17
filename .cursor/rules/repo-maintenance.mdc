@@ -1,0 +1,11 @@
+---
+description: Regenerate infrastructure manifest and keep docs aligned with the tree
+alwaysApply: true
+---
+
+# Repo maintenance (self-updating docs)
+
+- After **adding/removing/moving** Python packages under `src/iso_agent/`, **adding console scripts**, changing **optional dependency groups**, or adding top-level **docs / `.cursor/rules` / `references/`** files: run **`python scripts/sync_repo_docs.py`** and commit **`docs/generated/INFRASTRUCTURE.md`**. Pre-commit fails if it is stale.
+- **Never hand-edit** `docs/generated/INFRASTRUCTURE.md`.
+- When behavior or layers change, update **`docs/ARCHITECTURE.md`** (short, intent-focused); keep **`docs/CAPABILITIES.template.md`** (or your filled `CAPABILITIES.md`) aligned with real wiring. Prefer **editing those files** over adding new overlapping markdown in `docs/` unless the user explicitly wants a new doc.
+- Install **`pre-commit install`** once per clone so **gitleaks** and doc sync run on commit.

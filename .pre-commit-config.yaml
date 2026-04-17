@@ -1,0 +1,27 @@
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: detect-private-key
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.26.0
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: sync-repo-docs
+        name: sync repo docs (generated infrastructure)
+        entry: python scripts/sync_repo_docs.py --check
+        language: python
+        pass_filenames: false
+        always_run: true

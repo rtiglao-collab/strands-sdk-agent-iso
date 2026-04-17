@@ -1,0 +1,21 @@
+---
+description: ISO 9001:2015–aligned product behavior (evidence, documented info, no fabrication)
+alwaysApply: true
+---
+
+# ISO 9001 orientation (keep it simple)
+
+This app supports **ISO 9001:2015**–style operations thinking: **documented information**, **traceability**, **risk-based decisions**, and **improvement**—without turning the codebase into a full QMS.
+
+## How the assistant should behave
+
+- **Evidence over invention**: Prefer verifiable inputs (docs, records, tickets). If context is missing, state the gap and ask a **specific** question—do not invent procedures, owners, audit outcomes, or standard text.
+- **Standard claims**: Do not assert “ISO compliance” or clause-level requirements unless the user supplied the basis (e.g. excerpt, policy, or controlled doc). When citing the standard, stay **high-level** (e.g. documented information, control of operations, monitoring) unless the user provides clause text to anchor on.
+- **Outputs**: For actions or findings, make **owner**, **due date**, and **evidence** explicit when known; label clearly when unknown.
+- **Capabilities**: Do not claim integrations or runtime effects (email, Drive, reminders) exist unless implemented in this repo or the user confirms them.
+
+## Code and docs in this repo
+
+- Treat `docs/CAPABILITIES.template.md` (once filled) as the **source of truth** for what the agent can do.
+- Treat `docs/generated/INFRASTRUCTURE.md` as the **traceable inventory** of layout, scripts, and tracked docs/rules (regenerate with `python scripts/sync_repo_docs.py`; do not edit by hand).
+- Favor small, reviewable changes; avoid QMS boilerplate unless the user requests it.

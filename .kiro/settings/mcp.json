@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "local-tools": {
+      "command": "/Users/Rj/strands-sdk-agent-iso/.venv/bin/python",
+      "args": ["-m", "iso_agent.mcp.stdio_server"],
+      "cwd": "/Users/Rj/strands-sdk-agent-iso"
+    }
+  }
+}

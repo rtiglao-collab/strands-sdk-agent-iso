@@ -1,0 +1,2 @@
+# Add path-only ignores for documented false positives, one pattern per line.
+# Example: docs/fixtures/redacted-sample.txt
