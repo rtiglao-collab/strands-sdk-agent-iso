@@ -48,6 +48,7 @@ Rules live in **`.cursor/rules/*.mdc`** (YAML frontmatter: `alwaysApply` or `glo
 | `iso9001-product.mdc` | Evidence, no fake ISO claims, capabilities + INFRASTRUCTURE as traceability |
 | `repo-maintenance.mdc` | Run `sync_repo_docs.py`, commit generated file, edit ARCHITECTURE when behavior changes |
 | `python-strands.mdc` | L1/L2/L3 placement, Strands patterns, typing, logging note |
+| `git-explicit-push.mdc` | Do not `git push` / `gh … --push` unless the user explicitly asks |
 
 **`AGENTS.md`** at repo root indexes these for Cursor and humans.
 
