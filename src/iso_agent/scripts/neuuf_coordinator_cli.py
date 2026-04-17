@@ -6,12 +6,24 @@ import argparse
 import os
 import sys
 
-import boto3
+from strands.handlers.callback_handler import PrintingCallbackHandler
 
-from iso_agent.config import get_settings
 from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l2_user import UserScope
 from iso_agent.l3_runtime.agents import create_neuuf_coordinator_agent
+
+
+def _print_agent_result(agent: object, result: object) -> None:
+    """Emit final text only when stdout was not already streamed by the agent callback.
+
+    Strands :class:`~strands.agent.agent.Agent` defaults to :class:`PrintingCallbackHandler`,
+    which prints assistant tokens as they arrive. The CLI used to also ``print(str(result))``,
+    which duplicated the full reply for REPL and ``--query`` runs.
+    """
+    ch = getattr(agent, "callback_handler", None)
+    if isinstance(ch, PrintingCallbackHandler):
+        return
+    print(str(result))
 
 
 def main() -> None:
@@ -38,24 +50,6 @@ def main() -> None:
         # Show rich UI for tools in CLI
         os.environ["STRANDS_TOOL_CONSOLE_MODE"] = "enabled"
 
-    settings = get_settings()
-    if settings.llm_provider == "bedrock":
-        if boto3.Session().get_credentials() is None:
-            print(
-                "Missing AWS credentials for Bedrock Runtime (aws configure, env, or role). "
-                "Or ISO_AGENT_LLM_PROVIDER=anthropic with ANTHROPIC_API_KEY.",
-                file=sys.stderr,
-            )
-            raise SystemExit(1)
-    elif settings.llm_provider == "anthropic":
-        if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
-            print(
-                "Missing ANTHROPIC_API_KEY for direct Anthropic. "
-                "Or ISO_AGENT_LLM_PROVIDER=bedrock plus AWS credentials.",
-                file=sys.stderr,
-            )
-            raise SystemExit(1)
-
     ctx = inbound_dm(user_id="local-dev", space="dm", thread="neuuf-cli")
     scope = UserScope.from_context(ctx)
     try:
@@ -63,15 +57,15 @@ def main() -> None:
     except Exception as exc:
         print(
             f"Failed to initialize the coordinator agent: {exc}. "
-            "Bedrock (default): AWS creds + model access; optional ISO_AGENT_BEDROCK_MODEL_ID / "
-            "ISO_AGENT_BEDROCK_REGION_NAME. Anthropic: ISO_AGENT_LLM_PROVIDER=anthropic + "
-            "ANTHROPIC_API_KEY.",
+            "LLM is AWS Bedrock only (Strands BedrockModel): configure AWS credentials and region "
+            "(e.g. AWS_PROFILE, AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, or instance role) and "
+            "optional ISO_AGENT_BEDROCK_MODEL_ID / ISO_AGENT_BEDROCK_REGION_NAME.",
             file=sys.stderr,
         )
         raise SystemExit(1) from None
 
     if args.query is not None:
-        print(str(agent(args.query)))
+        _print_agent_result(agent, agent(args.query))
         return
 
     print("Neuuf ISO coordinator — type 'exit', 'quit', or Ctrl+D to stop.")
@@ -90,7 +84,7 @@ def main() -> None:
         if line.lower() in {"exit", "quit", "bye"}:
             break
         try:
-            print(str(agent(line)))
+            _print_agent_result(agent, agent(line))
             print()
         except Exception as exc:  # noqa: BLE001 — surface any model/tool error in the REPL
             print(f"error: {exc}", file=sys.stderr)

@@ -8,7 +8,7 @@ alwaysApply: false
 
 - **Imports**: Avoid cycles: `l1_router/__init__.py` must not import `handler` (see existing pattern). Import handlers from `iso_agent.l1_router.handler` where needed.
 - **Layers**: Router and adapters → `l1_router/`. Per-user paths and `UserScope` → `l2_user/`. `Agent`, tools, graphs → `l3_runtime/`.
-- **Strands**: Use upstream APIs (`Agent`, `@tool`, hooks, session, multiagent) per `references/STRANDS_SDK.md`. On AWS, follow the official **Bedrock Runtime** path (`BedrockModel`, boto3 credentials) — [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/) — same default shape as upstream `Agent()`; do not conflate with the separate **Bedrock Agents** invoke API unless explicitly scoped. Do not vendor the Strands SDK source into this repo.
+- **Strands**: Use upstream APIs (`Agent`, `@tool`, hooks, session, multiagent) per `references/STRANDS_SDK.md`. When unsure, read the matching modules under the **local SDK checkout** path in that file (same patterns as production). Do not vendor the Strands SDK source into this repo.
 - **Typing**: Keep type hints on public functions; run `mypy` / `ruff` when changing Python.
 - **Logging**: Follow Strands-style structured logging if you add logs (`key=<%s> | message`, `%s` not f-strings in log calls).
 - **New libraries**: follow **`discovery-first.mdc`** — use Strands/MCP/stdlib and existing AWS patterns before adding dependencies.

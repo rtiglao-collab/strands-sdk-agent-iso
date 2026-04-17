@@ -119,18 +119,26 @@ iso-neuuf-coordinator --query "Use drive_read_document on file ID <allowlisted f
 **Pass:** listing and read succeed for allowlisted IDs.  
 **Fail:** permission or “not allowlisted” — fix sharing or env comma lists (no spaces unless your parser allows—use comma-separated IDs as in README).
 
+**Fail:** HTTP 403 / `accessNotConfigured` / “Google Drive API has not been used in project …” — the **Drive API is off** for the GCP project that owns this service account key. In Google Cloud Console: **APIs & Services → Library → Google Drive API → Enable**, wait a few minutes, retry.
+
 ---
 
-## 3. Notion (QMS read + draft)
+## 3. Notion (discovery read + strict full-page read + draft)
 
-**What it does:** **`notion_read_page`** (allowlisted pages) and **`notion_create_qms_draft`** (child under allowlisted **parent** pages). Optional linkage to Drive evidence in draft body when your prompt supplies a link.
+**What it does:**
+
+- **`notion_discover_connected_pages`** (read-only) — when **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`**, lists pages the integration can access via Notion’s search API (id, title, parent, url). Scope is whatever you **shared with the integration** in the Notion UI.
+- **`notion_read_page`** — full plain-text read for **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** only (strict allowlist; use for controlled QMS pages).
+- **`notion_create_qms_draft`** — creates `[DRAFT]` children only under **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`**.
+
+Optional Drive evidence line in the draft body when your prompt supplies a link.
 
 ### 3.1 Acquire (Notion)
 
 1. In Notion: **Settings & members → Connections → Develop or manage integrations → New integration**.
 2. Type: **Internal** (typical for workspace-only). Name it e.g. `ISO Neuuf agent`.
 3. Copy **Internal Integration Secret** — this is **`NOTION_TOKEN`** (starts with `secret_`). Never commit it.
-4. **Share pages with the integration:** on each Notion page the agent must read or use as a parent for drafts, use **⋯ → Connections →** connect your integration (or “Add connections” in newer UI). Without this, API calls return “not found”.
+4. **Share pages with the integration:** on each Notion page the agent must see in discovery, read in full, or use as a parent for drafts, use **⋯ → Connections →** connect your integration (or “Add connections” in newer UI). Without this, API calls return “not found” or empty discovery.
 
 ### 3.2 Collect page UUIDs
 
@@ -138,31 +146,43 @@ From a Notion page URL:
 
 `https://www.notion.so/Your-Title-<UUID_WITH_OPTIONAL_DASHES>`
 
-The 32-character hex UUID (with or without hyphens) is what you put in env vars. Example: `a1b2c3d4e5f6789012345678abcdef12`.
+The 32-character hex UUID (**with or without hyphens** in env vars — both normalize to the same id) goes into allowlists.
 
 Decide:
 
-- **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** — pages the agent may **read** (`notion_read_page`).
-- **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** — pages under which **`notion_create_qms_draft`** may create **child** draft pages (often a “Drafts” or “QMS inbox” page).
+- **Discovery:** enable **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`** for workspace-style listing without putting every page id in env.
+- **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** — pages **`notion_read_page`** may fetch in full (narrow list).
+- **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** — parents under which **`notion_create_qms_draft`** may create children.
 
 ### 3.3 Environment variables
 
 ```bash
 export NOTION_TOKEN='secret_...'
 export ISO_AGENT_NOTION_ENABLED=true
-export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='uuid-readable-one,uuid-readable-two'
+export ISO_AGENT_NOTION_DISCOVERY_ENABLED=true
+export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='uuid-one,uuid-two'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='uuid-parent-for-drafts'
 ```
 
-### 3.4 Verify
+You can enable discovery **without** parent/page allowlists; add allowlists only when you need **`notion_read_page`** / **`notion_create_qms_draft`**.
+
+### 3.4 Verify (read-only first)
 
 ```bash
-iso-neuuf-coordinator --query "Use notion_read_page on <one allowed page uuid> and summarize in three bullets."
+iso-neuuf-coordinator --query "Call notion_discover_connected_pages with query '' and max_pages 15. Summarize titles and parent types in a short list."
+iso-neuuf-coordinator --query "Call notion_read_page on one allowlisted page UUID and return the first 500 characters."
+```
+
+Draft smoke (writes Notion):
+
+```bash
 iso-neuuf-coordinator --query "Use notion_create_qms_draft with title '[DRAFT] ISO agent smoke' and a one-paragraph body."
 ```
 
-**Pass:** read returns content; draft appears as a child under the allowlisted parent in Notion.  
-**Fail:** 401 → token wrong; 404 → page not shared with integration or wrong UUID.
+**Pass:** discovery lists shared pages; allowlisted read returns content; draft appears under the allowlisted parent.  
+**Fail:** 401 → token wrong; 404 / empty discovery → page not shared with integration or wrong UUID.
+
+**Script:** `python scripts/run_integration_smoke.py` runs discovery + Drive gap-file probe + Perplexity config (no LLM).
 
 ---
 
@@ -171,8 +191,9 @@ iso-neuuf-coordinator --query "Use notion_create_qms_draft with title '[DRAFT] I
 Example **local dev** block for `~/.zshrc` or a sourced `~/iso-agent.env` (**do not commit**):
 
 ```bash
-# LLM (pick one path)
-export ANTHROPIC_API_KEY='sk-ant-...'
+# LLM (AWS Bedrock — standard credential chain)
+export AWS_REGION='us-west-2'
+# export AWS_PROFILE='...'
 
 # Perplexity MCP (optional)
 export PERPLEXITY_API_KEY='pplx-...'
@@ -186,6 +207,7 @@ export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='...'
 # Notion (optional)
 export NOTION_TOKEN='secret_...'
 export ISO_AGENT_NOTION_ENABLED=true
+export ISO_AGENT_NOTION_DISCOVERY_ENABLED=true
 export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='...'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='...'
 ```
@@ -207,5 +229,5 @@ Reload: `source ~/iso-agent.env`, then `iso-neuuf-coordinator`.
 ## 6. Security reminders
 
 - Keep JSON key files and `NOTION_TOKEN` **out of git**; use a secrets manager in production.
-- **Allowlists** are intentional: the agent cannot list arbitrary Drive folders or read arbitrary Notion pages.
+- **Allowlists** are intentional for **strict full-page reads** and **draft parents**; **discovery** lists whatever pages are already shared with the integration in Notion.
 - Rotate keys if leaked; update env on all hosts running `iso-chat-webhook` or workers.

@@ -20,8 +20,7 @@ Suggested reading order for this host layout (paths relative to that checkout):
 
 1. `AGENTS.md` — contributor and AI patterns for the SDK repo  
 2. `README.md` — install and quick start  
-3. `src/strands/agent/agent.py` — `Agent` lifecycle (note default `BedrockModel` wiring when `model` is omitted)  
-3b. [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/) (user guide) — IAM, credentials, `BedrockModel`, defaults, troubleshooting  
+3. `src/strands/agent/agent.py` — `Agent` lifecycle  
 4. `src/strands/tools/decorator.py` — `@tool`  
 5. `docs/HOOKS.md` — audit and policy hooks  
 6. `src/strands/session/` — session managers if you persist conversations  
@@ -32,3 +31,5 @@ Suggested reading order for this host layout (paths relative to that checkout):
 **Official web docs (examples, user guide, deployment):** **`references/STRANDS_OFFICIAL_DOCS.md`** — hub starting at https://strandsagents.com/docs/examples/ and https://strandsagents.com/docs/user-guide/ (multi-agent, graphs, MCP, memory, structured output, deploy guides).
 
 Install in *this* repo via PyPI packages `strands-agents` and optional extras (see `pyproject.toml`), not by copying `sdk-python` source.
+
+**Model routing in this repo:** coordinators and specialists use **`get_default_model()`** → Strands **`BedrockModel`** only (AWS Bedrock Runtime). Choose the FM via **`ISO_AGENT_BEDROCK_MODEL_ID`** (and region / max tokens settings); that can be any foundation model your Bedrock account supports—not a separate vendor API wired in stock code.

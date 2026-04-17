@@ -19,7 +19,6 @@ dependencies = [
 
 [project.optional-dependencies]
 openai = ["strands-agents[openai]"]
-anthropic = ["strands-agents[anthropic]"]
 drive = [
     "google-api-python-client>=2.130.0,<3.0.0",
     "google-auth>=2.30.0,<3.0.0",
@@ -68,8 +67,6 @@ disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = [
-    "anthropic.*",
-    "boto3.*",
     "botocore.*",
     "strands_tools.*",
     "google.*",

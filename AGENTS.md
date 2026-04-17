@@ -2,7 +2,7 @@
 
 Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them for this workspace.
 
-**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`).
+**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`), **LLM stack** (`llm-bedrock-only.mdc` — Bedrock + Strands only; do not reintroduce direct Anthropic API wiring).
 
 **When editing Python under `src/`:** `python-strands.mdc` (layers, Strands usage, imports).
 
@@ -16,8 +16,6 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `docs/INITIAL_SETUP.md` | Bootstrap narrative + LLM prompt to reproduce this repo’s initial layout |
 | `docs/NEUUF_ISO_PHASE_PLAN.md` | Phased roadmap (Drive, Notion, Chat, Perplexity, gap pipeline) |
 | `docs/INTEGRATIONS_WALKTHROUGH.md` | Operator steps to acquire credentials and env for Drive, Notion, Perplexity |
-| `docs/ENV_AND_SECRETS_INVENTORY.md` | All env vars + secret files for local → cloud handoff |
-| `.env.example` | Safe template; copy to gitignored `.env` for local values |
 | `references/STRANDS_SAMPLES.md` | Local samples repo path + map sample → Neuuf use case |
 | `src/iso_agent/l3_runtime/tools/drive_tools.py` | Phase 3 Drive read tools (allowlist + service account) |
 | `src/iso_agent/l3_runtime/tools/notion_tools.py` | Phase 4 Notion QMS draft + read (allowlist + `NOTION_TOKEN`) |
@@ -29,7 +27,7 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `src/iso_agent/l2_user/audit_schedule.py` + `l3_runtime/tools/audit_tools.py` | Phase 7 audit cadence JSON + reminder helpers |
 | `docs/CAPABILITIES.template.md` | Copy to `CAPABILITIES.md` when you track real product capabilities |
 | `src/iso_agent/l3_runtime/team/*_tool.py` + `specialist_base.py` | Neuuf specialists as tools (one module per specialist; `subagents.py` aggregates) |
-| `src/iso_agent/l3_runtime/default_model.py` + `config.py` (`llm_provider`, Anthropic ids) | Default Anthropic Claude Sonnet; optional Bedrock via `ISO_AGENT_LLM_PROVIDER` |
+| `src/iso_agent/l3_runtime/default_model.py` + `config.py` (Bedrock ids) | AWS Bedrock only (`BedrockModel`); Claude-class models via Bedrock model / inference profile ids |
 
 Fill `docs/CAPABILITIES.template.md` (or a derived `CAPABILITIES.md`) so agent claims stay aligned with what is actually wired.
 

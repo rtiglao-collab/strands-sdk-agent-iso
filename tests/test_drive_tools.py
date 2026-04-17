@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from iso_agent.config import get_settings
 from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l2_user.user_scope import UserScope
@@ -12,7 +14,9 @@ def _scope() -> UserScope:
     return UserScope.from_context(inbound_dm(user_id="u", space="dm", thread="t"))
 
 
-def test_build_drive_tools_disabled_by_default() -> None:
+def test_build_drive_tools_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Must not inherit ``ISO_AGENT_DRIVE_ENABLED`` from the developer shell."""
+    monkeypatch.setenv("ISO_AGENT_DRIVE_ENABLED", "false")
     get_settings.cache_clear()
     assert drive_tools.build_drive_tools(_scope()) == []
 

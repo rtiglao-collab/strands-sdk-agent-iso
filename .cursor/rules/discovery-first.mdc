@@ -8,7 +8,7 @@ alwaysApply: true
 ## Repo review (do this before substantive changes)
 
 - **Search and read** what already exists: `src/iso_agent/`, `tests/`, `scripts/`, `docs/` (except generated), `knowledge/`, `references/`, `README.md`, `AGENTS.md`, `.cursor/rules/`, and **`docs/generated/INFRASTRUCTURE.md`** for the current layout and entry points.
-- **Strands SDK best practices**: before changing tools, agents, hooks, MCP, or multi-agent code, consult the **local upstream checkout** in **`references/STRANDS_SDK.md`** (path and reading order) and the official **Amazon Bedrock** model-provider guide linked from **`references/STRANDS_OFFICIAL_DOCS.md`**. Prefer mirroring upstream patterns over inventing new ones.
+- **Strands SDK best practices**: before changing tools, agents, hooks, MCP, or multi-agent code, consult the **local upstream checkout** documented in **`references/STRANDS_SDK.md`** (path and reading order). Prefer mirroring patterns from that tree over inventing new ones.
 - **Samples repo**: for runnable patterns (personal assistant, MCP, swarms), consult **`references/STRANDS_SAMPLES.md`** and the checkout **`/Users/Rj/sdk-python/samples`** before adding new structure here.
 - **Prefer reuse or in-place updates** over parallel implementations when it fits L1/L2/L3 and stays readable.
 - **Do not duplicate work**: if a helper, tool, or pattern already solves 80% of the need, extend it rather than adding a second path.

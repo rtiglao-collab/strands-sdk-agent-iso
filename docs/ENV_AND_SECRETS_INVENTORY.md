@@ -2,7 +2,7 @@
 
 Use this list when moving from **local exports** and **`secrets/`** files to **cloud** secret managers, CI variables, or mounted files. Names match what the code reads today (`src/iso_agent/config.py`, tools, adapters).
 
-**Convention:** `ISO_AGENT_*` variables are loaded by `Settings` (see `config.py`). A few vendors use **standard names** without that prefix (`GOOGLE_APPLICATION_CREDENTIALS`, `NOTION_TOKEN`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`).
+**Convention:** `ISO_AGENT_*` variables are loaded by `Settings` (see `config.py`). A few vendors use **standard names** without that prefix (`GOOGLE_APPLICATION_CREDENTIALS`, `NOTION_TOKEN`, `PERPLEXITY_API_KEY`).
 
 ## Secret values (treat as credentials in prod)
 
@@ -10,7 +10,6 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 |------|------|---------|---------------|-----------------|
 | `GOOGLE_APPLICATION_CREDENTIALS` | Filesystem path to JSON | Drive client (`drive_client.py`) | `secrets/google/*.json` (gitignored) | Mount file or inject JSON into a volume; set env to path |
 | `NOTION_TOKEN` | String | Notion tools | export / secret manager | Parameter store / vault secret |
-| `ANTHROPIC_API_KEY` | String | `default_model.py` when `ISO_AGENT_LLM_PROVIDER=anthropic` | export | Secret manager |
 | `PERPLEXITY_API_KEY` | String | Perplexity MCP (`perplexity.py`) | export | Secret manager |
 | `ISO_AGENT_CHAT_WEBHOOK_SECRET` | String | Google Chat webhook (`google_chat_app.py`) | export | Secret manager; rotate with Chat app config |
 
@@ -26,20 +25,17 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 | Variable | Purpose |
 |----------|---------|
 | `ISO_AGENT_PRIMARY_MODE` | `demo` \| `neuuf` — demo calculator vs Neuuf stack in `handle_user_message` |
-| `ISO_AGENT_LLM_PROVIDER` | `bedrock` (default) \| `anthropic` |
 | `ISO_AGENT_BEDROCK_MODEL_ID` | Bedrock model or inference profile id |
 | `ISO_AGENT_BEDROCK_REGION_NAME` | Bedrock region override |
 | `ISO_AGENT_BEDROCK_MAX_TOKENS` | Optional max tokens |
-| `ISO_AGENT_ANTHROPIC_MODEL_ID` | Anthropic model id when using direct API |
-| `ISO_AGENT_ANTHROPIC_MAX_TOKENS` | Anthropic max tokens |
 | `ISO_AGENT_PERPLEXITY_TRANSPORT` | `disabled` (default) \| `docker` — researcher MCP |
 | `ISO_AGENT_DRIVE_ENABLED` | `true` / `false` — enable Drive tools |
 | `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` | Comma-separated **folder** IDs (allowlist). **Not** `ISO_AGENT_DRIVE_FOLDER_ID`. |
 | `ISO_AGENT_DRIVE_ALLOWED_FILE_IDS` | Optional comma-separated **file** IDs |
 | `ISO_AGENT_DRIVE_MAX_LIST` | Max list size (default 25, cap 100) |
 | `ISO_AGENT_NOTION_ENABLED` | `true` / `false` |
-| `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` | Comma-separated Notion **page** UUIDs (draft parents) |
-| `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` | Comma-separated Notion **page** UUIDs (read) |
+| `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` | Comma-separated Notion **page** UUIDs (draft parents; required for ``notion_create_qms_draft``) |
+| `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` | Reserved (reads use pages shared with the integration) |
 | `ISO_AGENT_CHAT_WEBHOOK_SECRET` | Shared secret header value for Chat ingress |
 | `ISO_AGENT_CHAT_ALLOW_INSECURE` | `true` only for local dev without secret |
 | `ISO_AGENT_CHAT_DEDUPE_TTL_SECONDS` | Webhook dedupe window (seconds) |

@@ -19,7 +19,7 @@ Then commit this file. Pre-commit runs `sync_repo_docs.py --check`.
 
 ## Optional dependency groups
 
-`anthropic`, `chat`, `dev`, `drive`, `notion`, `openai`
+`chat`, `dev`, `drive`, `notion`, `openai`
 
 ## Package tree (`src/iso_agent/`)
 
@@ -125,8 +125,6 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `references/STRANDS_SAMPLES.md`
 - `references/STRANDS_SDK.md`
 - `scripts/sync_repo_docs.py`
-- `secrets/README.md`
-- `secrets/google/.gitkeep`
 - `skills/README.md`
 - `src/iso_agent/__init__.py`
 - `src/iso_agent/adapters/__init__.py`

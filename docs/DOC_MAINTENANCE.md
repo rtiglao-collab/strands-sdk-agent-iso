@@ -4,7 +4,7 @@ Before adding new markdown under `docs/`, check whether **`docs/ARCHITECTURE.md`
 
 Strands implementation patterns: **`references/STRANDS_SDK.md`** holds the **local `sdk-python` checkout path** and reading order—update only there if the clone moves.
 
-Neuuf / ISO roadmap and sample mapping: **`docs/NEUUF_ISO_PHASE_PLAN.md`**, **`references/STRANDS_SAMPLES.md`**. Env/secrets handoff: **`docs/ENV_AND_SECRETS_INVENTORY.md`**. Perplexity MCP: **`src/iso_agent/l3_runtime/integrations/perplexity.py`**. Google Drive read-only: **`integrations/drive_client.py`**, **`tools/drive_tools.py`**. Notion QMS: **`integrations/notion_client.py`**, **`tools/notion_tools.py`**.
+Neuuf / ISO roadmap and sample mapping: **`docs/NEUUF_ISO_PHASE_PLAN.md`**, **`references/STRANDS_SAMPLES.md`**. Perplexity MCP: **`src/iso_agent/l3_runtime/integrations/perplexity.py`**. Google Drive read-only: **`integrations/drive_client.py`**, **`tools/drive_tools.py`**. Notion QMS: **`integrations/notion_client.py`**, **`tools/notion_tools.py`**.
 
 ## Generated inventory (required)
 
@@ -24,8 +24,6 @@ Pre-commit runs `python scripts/sync_repo_docs.py --check` and **blocks commits*
 | File | You update when… |
 |------|------------------|
 | `docs/ARCHITECTURE.md` | Layering concepts or where new concerns live |
-| `docs/ENV_AND_SECRETS_INVENTORY.md` | New integration env vars or secret-file paths |
-| `.env.example` | New `ISO_AGENT_*` or documented non-prefixed env vars (no real secrets) |
 | `docs/CAPABILITIES.template.md` → copy to `CAPABILITIES.md` | Product capabilities change |
 | `.cursor/rules/*.mdc` | AI guardrails or conventions change |
 | `AGENTS.md` | High-level entry points for assistants change |

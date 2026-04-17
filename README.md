@@ -45,13 +45,16 @@ pre-commit install
 python scripts/sync_repo_docs.py
 ```
 
-Optional local config: **`cp .env.example .env`** then edit **`.env`** (gitignored) with secrets and overrides. **`.env.example`** is safe to commit and lists variable names; see **`docs/ENV_AND_SECRETS_INVENTORY.md`**.
-
 `pre-commit` runs **gitleaks** (secret scanning), hygiene checks, and validates that **`docs/generated/INFRASTRUCTURE.md`** matches the repo layout. Regenerate that file with `python scripts/sync_repo_docs.py` whenever you add or move packages, scripts, or top-level docs or rules (see **`docs/DOC_MAINTENANCE.md`**).
 
 **Note:** `pre-commit` expects a **git** repository in this directory (`git init` once if you have not already).
 
 VS Code / Cursor: run the task **“Sync repo docs (INFRASTRUCTURE.md)”** from `.vscode/tasks.json`.
+
+### Day-to-day (no reinstall every edit)
+
+- **`pip install -e ".[dev]"` is editable:** code under `src/` is used live on the next Python start. You do **not** need to re-run `pip install` after every change—only when **`pyproject.toml`** (dependencies, extras, scripts) changes.
+- **Load venv + `.env` in one step:** from the repo root, `source scripts/dev_shell.sh` activates `.venv` (if present) and **`source`s `.env`** into the current shell (`set -a` so `NOTION_TOKEN` and other non-`ISO_AGENT_*` keys export correctly). Or run `./scripts/dev_shell.sh` to open a **new** shell with the same setup.
 
 ## Commands
 
@@ -71,11 +74,9 @@ Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs r
 
 ## Model providers
 
-**Default:** **Anthropic Claude Sonnet** via direct API (`strands.models.anthropic.AnthropicModel`), model id **`claude-sonnet-4-6`** (override with **`ISO_AGENT_ANTHROPIC_MODEL_ID`**). Set **`ANTHROPIC_API_KEY`** in your environment (standard Anthropic env name; not prefixed with `ISO_AGENT_`). Optional **`ISO_AGENT_ANTHROPIC_MAX_TOKENS`** (default `4096`).
+**Only path:** **AWS Bedrock** via Strands **`BedrockModel`**. All coordinator reasoning in stock code goes through **Bedrock Runtime** (boto3 / IAM / regional entitlements)—not Anthropic’s separate direct API. Strands may default to a **Claude-class Bedrock model id** when none is set; override with **`ISO_AGENT_BEDROCK_MODEL_ID`** to any **Bedrock foundation model or inference profile** your AWS account can invoke in that region (Claude, Nova, Llama, Mistral, etc., per Bedrock catalog and your allowlisting). Also set the **standard AWS / boto3 credential chain** (e.g. **`AWS_PROFILE`**, keys, instance role). Optional: **`ISO_AGENT_BEDROCK_REGION_NAME`**, **`ISO_AGENT_BEDROCK_MAX_TOKENS`**.
 
-**Bedrock instead:** set **`ISO_AGENT_LLM_PROVIDER=bedrock`** and configure AWS credentials; all `Agent` instances use **`BedrockModel()`** (Strands default).
-
-**OpenAI (optional extra):** `pip install -e ".[openai]"` if you switch factories or models in custom code.
+**OpenAI (optional extra):** `pip install -e ".[openai]"` only if you add **custom** code that uses another Strands model provider; the stock Neuuf stack uses Bedrock only.
 
 Settings live in **`src/iso_agent/config.py`** (`Settings` / `get_settings()`); the shared factory is **`src/iso_agent/l3_runtime/default_model.py`** (`get_default_model()`).
 
@@ -91,11 +92,11 @@ See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, sc
 
 **Neuuf / ISO roadmap:** **`docs/NEUUF_ISO_PHASE_PLAN.md`** (phases for Drive, Notion, Google Chat, Perplexity, gap pipeline). **Samples map:** **`references/STRANDS_SAMPLES.md`** (`/Users/Rj/sdk-python/samples`).
 
-**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step Drive, Notion, and Perplexity; Chat remains in this README when you deploy ingress. **Env / secrets inventory (local → cloud):** **`docs/ENV_AND_SECRETS_INVENTORY.md`**.
+**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step Drive, Notion, and Perplexity; Chat remains in this README when you deploy ingress. Quick probe (no LLM): **`python scripts/run_integration_smoke.py`** (Drive gap-named file, Notion discovery, Perplexity config, in-repo gap prompt path).
 
 **Perplexity (Phase 2):** set `PERPLEXITY_API_KEY` and `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`, with Docker running, so the **researcher** sub-agent loads the `mcp/perplexity-ask` image (same pattern as `samples/.../05-personal-assistant/search_assistant.py`). Default transport is `disabled` so environments without Docker stay safe.
 
-**Google Drive (Phase 3):** `pip install iso-agent[drive]`, set `GOOGLE_APPLICATION_CREDENTIALS` to a **service account JSON** with **Drive read-only** access. For local dev you can keep the key under **`secrets/google/*.json`** (gitignored; see **`secrets/README.md`**), then:
+**Google Drive (Phase 3):** `pip install iso-agent[drive]`, set `GOOGLE_APPLICATION_CREDENTIALS` to a **service account JSON** with **Drive read-only** access, then:
 
 - `ISO_AGENT_DRIVE_ENABLED=true`
 - `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` — comma-separated folder IDs (listing + parent checks)

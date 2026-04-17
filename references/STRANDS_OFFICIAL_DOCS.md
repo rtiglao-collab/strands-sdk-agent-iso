@@ -15,7 +15,9 @@ This file is a **stable entry map**; deeper pages are linked from the sections b
 
 ## Amazon Bedrock — Strands canonical path (not Bedrock Agents invoke)
 
-Strands documents **native Bedrock integration** via **`BedrockModel`** (Bedrock Runtime **Converse**). A basic `Agent()` uses that provider by default with a Claude Sonnet–class Bedrock default in supported regions. **Sonnet (or any FM)** is selected with a Bedrock **`model_id` / inference profile** your account can use — see the [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/) page.
+Strands documents **native Bedrock integration** via **`BedrockModel`** (Bedrock Runtime **Converse**). A basic `Agent()` in upstream samples often defaults to a Claude-class **Bedrock** model id in supported regions; you override with whatever **Bedrock `model_id` / inference profile** your account can use — see the [Amazon Bedrock model provider](https://strandsagents.com/docs/user-guide/concepts/model-providers/amazon-bedrock/) page.
+
+**This host (`iso-agent`):** the shared factory **`src/iso_agent/l3_runtime/default_model.py`** constructs **`BedrockModel` only**. There is no stock path that calls Anthropic’s direct HTTP API; “which LLM” here means **which Bedrock-accessible FM** you declare (env / inference profile), still inside the Strands + AWS stack.
 
 This is **not** the separate **Amazon Bedrock Agents** “invoke agent by id/alias” product unless you add a custom integration. For deployment platforms, the user guide also covers **Bedrock AgentCore** and other targets from the examples index.
 
