@@ -89,7 +89,7 @@ See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, sc
 
 **Neuuf / ISO roadmap:** **`docs/NEUUF_ISO_PHASE_PLAN.md`** (phases for Drive, Notion, Google Chat, Perplexity, gap pipeline). **Samples map:** **`references/STRANDS_SAMPLES.md`** (`/Users/Rj/sdk-python/samples`).
 
-**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step Drive, Notion, and Perplexity; Chat remains in this README when you deploy ingress.
+**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step Drive, Notion, and Perplexity; Chat remains in this README when you deploy ingress. **Env / secrets inventory (local → cloud):** **`docs/ENV_AND_SECRETS_INVENTORY.md`**.
 
 **Perplexity (Phase 2):** set `PERPLEXITY_API_KEY` and `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`, with Docker running, so the **researcher** sub-agent loads the `mcp/perplexity-ask` image (same pattern as `samples/.../05-personal-assistant/search_assistant.py`). Default transport is `disabled` so environments without Docker stay safe.
 

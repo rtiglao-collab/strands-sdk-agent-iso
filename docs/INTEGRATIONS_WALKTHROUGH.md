@@ -95,10 +95,13 @@ iso-neuuf-coordinator --query "Use neuuf_researcher only. List the tool names th
 ### 2.3 Environment variables
 
 ```bash
-# If you stored the key in this repo (gitignored):
-# export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/iso-drive-sa.json"
-export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/iso-drive-sa.json"
+# Option A — key inside this clone (see secrets/README.md; *.json under secrets/ is gitignored):
+export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/<YOUR_SERVICE_ACCOUNT>.json"
+# Option B — key outside the repo:
+# export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/iso-drive-sa.json"
+
 export ISO_AGENT_DRIVE_ENABLED=true
+# Comma-separated Google Drive folder IDs (allowlist). There is no ISO_AGENT_DRIVE_FOLDER_ID.
 export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='folder_id_one,folder_id_two'
 # Optional: allow reading specific files by ID even if parent logic differs
 # export ISO_AGENT_DRIVE_ALLOWED_FILE_IDS='file_id_one'

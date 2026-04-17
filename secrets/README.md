@@ -10,11 +10,17 @@ Use this tree for **credential files that must never be committed**. Only markdo
    `secrets/google/<anything>.json`  
    Example: `secrets/google/neuuf-drive-dev.json`
 
-3. Point the standard Google client env var at that path (absolute path is safest):
+3. Point the standard Google client env var at that path (from repo root, `$PWD` is fine):
 
    ```bash
-   export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/neuuf-drive-dev.json"
+   export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/<YOUR_KEY>.json"
+   export ISO_AGENT_DRIVE_ENABLED=true
+   export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS="<comma_separated_folder_ids>"
    ```
+
+   Drive tools use **`ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS`** (allowlist), not `ISO_AGENT_DRIVE_FOLDER_ID`.
+
+4. Full variable list and cloud migration notes: **`docs/ENV_AND_SECRETS_INVENTORY.md`**.
 
 The Drive integration reads **`GOOGLE_APPLICATION_CREDENTIALS`** (see `src/iso_agent/l3_runtime/integrations/drive_client.py`).
 
