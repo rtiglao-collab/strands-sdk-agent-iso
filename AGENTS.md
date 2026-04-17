@@ -2,7 +2,7 @@
 
 Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them for this workspace.
 
-**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`), git push only when asked (`git-explicit-push.mdc`).
+**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`).
 
 **When editing Python under `src/`:** `python-strands.mdc` (layers, Strands usage, imports).
 
@@ -20,6 +20,6 @@ Fill `docs/CAPABILITIES.template.md` (or a derived `CAPABILITIES.md`) so agent c
 
 **Habit:** search the repo and read `docs/generated/INFRASTRUCTURE.md` before building; extend existing code and markdown where it fits—avoid duplicate docs and parallel implementations. Prefer the current stack (Strands, MCP, pydantic, existing AWS usage) before recommending new dependencies.
 
-**Strands SDK context:** keep the upstream clone at **`references/STRANDS_SDK.md`** (local path + reading order) in scope—ideally open it in the **same Cursor workspace** (multi-root) as this repo when developing so searches and navigation include `src/strands/` best practices. For **model/tools/prompt framing and production-oriented Strands guidance**, also read **`references/STRANDS_AWS_INTRO_BLOG.md`** (summary + link to the [AWS Open Source Strands intro](https://aws.amazon.com/blogs/opensource/introducing-strands-agents-an-open-source-ai-agents-sdk/)).
+**Strands SDK context:** keep the upstream clone at **`references/STRANDS_SDK.md`** (local path + reading order) in scope—ideally open it in the **same Cursor workspace** (multi-root) as this repo when developing so searches and navigation include `src/strands/` best practices.
 
 Do not treat this file as a substitute for the `.mdc` rules—keep those concise and current.

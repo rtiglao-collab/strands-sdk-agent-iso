@@ -77,6 +77,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `references/HOOKS_from_strands_sdk.md`
 - `references/MCP_CLIENT_ARCHITECTURE_from_strands_sdk.md`
 - `references/STRANDS_AWS_INTRO_BLOG.md`
+- `references/STRANDS_OFFICIAL_DOCS.md`
 - `references/STRANDS_SDK.md`
 - `scripts/sync_repo_docs.py`
 - `skills/README.md`

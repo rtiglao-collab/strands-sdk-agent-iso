@@ -23,7 +23,7 @@ This document records the **first bootstrap** of the `iso-agent` host repository
 | Prompts | `knowledge/agents/*.md` | Stubs for primary / specialist prompts |
 | Runtime memory | `memory/users/` | Gitignored user partitions (`.gitkeep` only) |
 | Skills (optional) | `skills/README.md` | How to wire AgentSkills later |
-| Upstream pointers | `references/` | `STRANDS_SDK.md` (local `sdk-python` path + reading order), `STRANDS_AWS_INTRO_BLOG.md` (AWS announcement summary + link), copies of Strands `HOOKS` / MCP architecture docs |
+| Upstream pointers | `references/` | `STRANDS_SDK.md` (local `sdk-python` path + reading order) + copies of Strands `HOOKS` / MCP architecture docs |
 | Human architecture | `docs/ARCHITECTURE.md` | Layer model, hooks, change habit |
 | Capabilities template | `docs/CAPABILITIES.template.md` | Product truth template |
 | Doc maintenance | `docs/DOC_MAINTENANCE.md` | When to regenerate, pre-commit, git requirement |
@@ -48,7 +48,6 @@ Rules live in **`.cursor/rules/*.mdc`** (YAML frontmatter: `alwaysApply` or `glo
 | `iso9001-product.mdc` | Evidence, no fake ISO claims, capabilities + INFRASTRUCTURE as traceability |
 | `repo-maintenance.mdc` | Run `sync_repo_docs.py`, commit generated file, edit ARCHITECTURE when behavior changes |
 | `python-strands.mdc` | L1/L2/L3 placement, Strands patterns, typing, logging note |
-| `git-explicit-push.mdc` | Do not `git push` / `gh … --push` unless the user explicitly asks |
 
 **`AGENTS.md`** at repo root indexes these for Cursor and humans.
 

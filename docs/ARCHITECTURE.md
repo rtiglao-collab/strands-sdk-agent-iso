@@ -46,4 +46,4 @@ See **`docs/DOC_MAINTENANCE.md`** for the full “what to update when” checkli
 
 Review **`docs/generated/INFRASTRUCTURE.md`** and existing modules before adding code. Prefer extending what exists (and editing existing `docs/` markdown) over parallel files or duplicate patterns. Cursor encodes this in **`.cursor/rules/discovery-first.mdc`**.
 
-For Strands behavior and conventions, use the **local SDK checkout** path and reading order in **`references/STRANDS_SDK.md`** (keep it in the same Cursor workspace when possible). For **high-level Strands best practices** (model-driven agents, tools, MCP, deployment thinking), see **`references/STRANDS_AWS_INTRO_BLOG.md`** and the linked [AWS Open Source post](https://aws.amazon.com/blogs/opensource/introducing-strands-agents-an-open-source-ai-agents-sdk/).
+For Strands behavior and conventions, use the **local SDK checkout** path and reading order in **`references/STRANDS_SDK.md`** (keep it in the same Cursor workspace when possible).
