@@ -124,6 +124,7 @@ def _manifest_paths(repo: Path, tracked: list[str] | None) -> list[str]:
         "references/",
     )
     single_files = (
+        ".env.example",
         "AGENTS.md",
         "README.md",
         "pyproject.toml",

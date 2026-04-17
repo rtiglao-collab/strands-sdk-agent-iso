@@ -45,6 +45,8 @@ pre-commit install
 python scripts/sync_repo_docs.py
 ```
 
+Optional local config: **`cp .env.example .env`** then edit **`.env`** (gitignored) with secrets and overrides. **`.env.example`** is safe to commit and lists variable names; see **`docs/ENV_AND_SECRETS_INVENTORY.md`**.
+
 `pre-commit` runs **gitleaks** (secret scanning), hygiene checks, and validates that **`docs/generated/INFRASTRUCTURE.md`** matches the repo layout. Regenerate that file with `python scripts/sync_repo_docs.py` whenever you add or move packages, scripts, or top-level docs or rules (see **`docs/DOC_MAINTENANCE.md`**).
 
 **Note:** `pre-commit` expects a **git** repository in this directory (`git init` once if you have not already).

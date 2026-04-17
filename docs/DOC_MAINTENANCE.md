@@ -25,6 +25,7 @@ Pre-commit runs `python scripts/sync_repo_docs.py --check` and **blocks commits*
 |------|------------------|
 | `docs/ARCHITECTURE.md` | Layering concepts or where new concerns live |
 | `docs/ENV_AND_SECRETS_INVENTORY.md` | New integration env vars or secret-file paths |
+| `.env.example` | New `ISO_AGENT_*` or documented non-prefixed env vars (no real secrets) |
 | `docs/CAPABILITIES.template.md` → copy to `CAPABILITIES.md` | Product capabilities change |
 | `.cursor/rules/*.mdc` | AI guardrails or conventions change |
 | `AGENTS.md` | High-level entry points for assistants change |

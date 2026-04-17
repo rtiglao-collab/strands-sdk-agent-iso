@@ -99,6 +99,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `docs/AUDIT_FLOW.md`
 - `docs/CAPABILITIES.template.md`
 - `docs/DOC_MAINTENANCE.md`
+- `docs/ENV_AND_SECRETS_INVENTORY.md`
 - `docs/INITIAL_SETUP.md`
 - `docs/INTEGRATIONS_WALKTHROUGH.md`
 - `docs/NEUUF_ISO_PHASE_PLAN.md`

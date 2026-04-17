@@ -17,6 +17,7 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `docs/NEUUF_ISO_PHASE_PLAN.md` | Phased roadmap (Drive, Notion, Chat, Perplexity, gap pipeline) |
 | `docs/INTEGRATIONS_WALKTHROUGH.md` | Operator steps to acquire credentials and env for Drive, Notion, Perplexity |
 | `docs/ENV_AND_SECRETS_INVENTORY.md` | All env vars + secret files for local → cloud handoff |
+| `.env.example` | Safe template; copy to gitignored `.env` for local values |
 | `references/STRANDS_SAMPLES.md` | Local samples repo path + map sample → Neuuf use case |
 | `src/iso_agent/l3_runtime/tools/drive_tools.py` | Phase 3 Drive read tools (allowlist + service account) |
 | `src/iso_agent/l3_runtime/tools/notion_tools.py` | Phase 4 Notion QMS draft + read (allowlist + `NOTION_TOKEN`) |

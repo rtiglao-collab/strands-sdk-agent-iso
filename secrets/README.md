@@ -1,5 +1,7 @@
 # Local secrets (development only)
 
+For **`ISO_AGENT_*`** defaults and other env names, start from **`.env.example`** in the repo root (`cp .env.example .env` — **`.env`** is gitignored).
+
 Use this tree for **credential files that must never be committed**. Only markdown and `.gitkeep` files here are tracked in git; **`*.json` under `secrets/` is gitignored**.
 
 ## Google (Drive / APIs) — service account JSON

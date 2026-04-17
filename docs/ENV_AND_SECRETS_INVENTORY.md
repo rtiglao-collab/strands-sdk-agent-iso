@@ -60,6 +60,12 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 | `memory/users/**` | Per-user runtime state — gitignored except `.gitkeep` |
 | `.env` (optional) | pydantic-settings reads it if present — **gitignored** at repo root |
 
+## Safe template in git
+
+| Path | Purpose |
+|------|---------|
+| `.env.example` | **Committed** placeholder names and defaults — copy to `.env` and fill secrets locally (`cp .env.example .env`) |
+
 ## Copy-paste: Google Drive (this repo)
 
 From the repository root, after placing your key under `secrets/google/`:
