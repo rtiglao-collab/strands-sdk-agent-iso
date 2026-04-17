@@ -79,9 +79,9 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 
 - Optional extra **`pip install iso-agent[notion]`** (`notion-client`).
 - `src/iso_agent/l3_runtime/integrations/notion_client.py` — UUID validation, `create_child_page`, `fetch_page_text`.
-- `src/iso_agent/l3_runtime/tools/notion_tools.py` — `notion_create_qms_draft`, `notion_read_page` (only if respective allowlists are non-empty).
+- `src/iso_agent/l3_runtime/tools/notion_tools.py` — `notion_create_qms_draft`, `notion_read_page`, discovery, and **`notion_allowlist_*`** (persisted allowlist under **`memory/users/<user_key>/notion/`** merged with env on each call).
 - Token: **`NOTION_TOKEN`** (internal integration secret; not prefixed with `ISO_AGENT_` to match Notion docs). Never logged.
-- Settings: `notion_enabled`, `notion_allowed_parent_ids`, `notion_allowed_page_ids`; merged in **`team/coordinator.py`**.
+- Settings: `notion_enabled`, `notion_allowed_parent_ids`, `notion_allowed_page_ids`; merge with disk in **`l2_user/notion_allowlist_store.py`** (used from **`notion_tools.py`**).
 - Draft titles prefixed with **`[DRAFT]`**; no “publish” path in this phase.
 
 **Exit criteria:** Tests mock Notion calls; docs and capability template updated.

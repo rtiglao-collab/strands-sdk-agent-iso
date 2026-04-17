@@ -89,5 +89,9 @@ def handle_google_chat_turn(ctx: InboundContext, text: str) -> str:
         ctx.space_kind,
         mode,
     )
-    agent = build_neuuf_coordinator(scope, google_chat_mode=mode)
+    agent = build_neuuf_coordinator(
+        scope,
+        google_chat_mode=mode,
+        include_coding_tools=False,
+    )
     return str(agent(text))

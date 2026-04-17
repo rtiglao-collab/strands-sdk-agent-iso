@@ -28,8 +28,12 @@ def create_demo_agent(scope: UserScope) -> Agent:
     )
 
 
-def create_neuuf_coordinator_agent(scope: UserScope) -> Agent:
+def create_neuuf_coordinator_agent(
+    scope: UserScope,
+    *,
+    include_coding_tools: bool = True,
+) -> Agent:
     """Neuuf ISO coordinator (agents-as-tools). See ``docs/NEUUF_ISO_PHASE_PLAN.md``."""
     from iso_agent.l3_runtime.team.coordinator import build_neuuf_coordinator
 
-    return build_neuuf_coordinator(scope)
+    return build_neuuf_coordinator(scope, include_coding_tools=include_coding_tools)

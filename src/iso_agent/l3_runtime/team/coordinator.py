@@ -11,6 +11,7 @@ from iso_agent.l3_runtime.prompts import load_role_prompt
 from iso_agent.l3_runtime.team.subagents import build_specialist_tools
 from iso_agent.l3_runtime.tools.audit_tools import build_audit_tools
 from iso_agent.l3_runtime.tools.calendar_tools import build_calendar_tools
+from iso_agent.l3_runtime.tools.coding_tools import build_coding_tools
 from iso_agent.l3_runtime.tools.drive_tools import build_drive_tools
 from iso_agent.l3_runtime.tools.gap_tools import build_gap_tools
 from iso_agent.l3_runtime.tools.notion_tools import build_notion_tools
@@ -20,12 +21,15 @@ def build_neuuf_coordinator(
     scope: UserScope,
     *,
     google_chat_mode: Literal["dm", "room"] = "dm",
+    include_coding_tools: bool = True,
 ) -> Agent:
     """Return the Neuuf ISO coordinator :class:`~strands.agent.agent.Agent` for this scope.
 
     Args:
         scope: User-scoped memory and thread partition.
         google_chat_mode: ``room`` appends stricter shared-space instructions (Phase 5).
+        include_coding_tools: When true (default), register ``python_repl``, ``editor``,
+            ``shell``, and ``journal``. Google Chat ingress should pass false.
     """
     base = load_role_prompt("neuuf_coordinator")
     scope_ctx = (
@@ -45,6 +49,7 @@ def build_neuuf_coordinator(
         *build_audit_tools(scope),
         *build_drive_tools(scope),
         *build_notion_tools(scope),
+        *build_coding_tools(scope, enabled=include_coding_tools),
     ]
     return Agent(
         model=get_default_model(),

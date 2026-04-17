@@ -31,5 +31,3 @@ Suggested reading order for this host layout (paths relative to that checkout):
 **Official web docs (examples, user guide, deployment):** **`references/STRANDS_OFFICIAL_DOCS.md`** — hub starting at https://strandsagents.com/docs/examples/ and https://strandsagents.com/docs/user-guide/ (multi-agent, graphs, MCP, memory, structured output, deploy guides).
 
 Install in *this* repo via PyPI packages `strands-agents` and optional extras (see `pyproject.toml`), not by copying `sdk-python` source.
-
-**Model routing in this repo:** coordinators and specialists use **`get_default_model()`** → Strands **`BedrockModel`** only (AWS Bedrock Runtime). Choose the FM via **`ISO_AGENT_BEDROCK_MODEL_ID`** (and region / max tokens settings); that can be any foundation model your Bedrock account supports—not a separate vendor API wired in stock code.

@@ -53,13 +53,15 @@ Review **`docs/generated/INFRASTRUCTURE.md`** and existing modules before adding
 
 For Strands behavior and conventions, use the **local SDK checkout** path and reading order in **`references/STRANDS_SDK.md`** (keep it in the same Cursor workspace when possible).
 
-**Default model:** **`l3_runtime/default_model.py`** (`get_default_model`) — **AWS Bedrock only** (`BedrockModel`): Strands talks to **Bedrock Runtime**, not Anthropic’s direct API. Coordinator and inner specialists share the same factory; FM choice is **`ISO_AGENT_BEDROCK_MODEL_ID`** (any Bedrock model / profile your account can use).
+**Default model:** **`l3_runtime/default_model.py`** (`get_default_model`) — **Bedrock only** (`BedrockModel`; no Anthropic direct API). Coordinator and inner specialists use the same factory. Policy: **`.cursor/rules/llm-bedrock-only.mdc`**.
 
 **Phase 2 research:** Perplexity MCP lives in **`src/iso_agent/l3_runtime/integrations/perplexity.py`** and is wired into the researcher via **`l3_runtime/team/researcher_tool.py`** (aggregated in **`team/subagents.py`**; opt-in Docker; see README).
 
 **Phase 3 Drive:** Read-only tools in **`l3_runtime/tools/drive_tools.py`** with client helpers in **`l3_runtime/integrations/drive_client.py`**; merged on the **coordinator** `Agent` in **`l3_runtime/team/coordinator.py`**. Requires optional `iso-agent[drive]` install and allowlisted folder/file IDs (see README).
 
-**Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`** with **`l3_runtime/integrations/notion_client.py`**; same coordinator merge path. Requires `iso-agent[notion]`, **`NOTION_TOKEN`**, and allowlisted Notion page UUIDs (see README).
+**Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`** with **`l3_runtime/integrations/notion_client.py`**; allowlists are **env ∪ per-user persisted JSON** via **`l2_user/notion_allowlist_store.py`**. Requires `iso-agent[notion]`, **`NOTION_TOKEN`**, and at least one read/parent id (env or file) before read/create succeed (see README).
+
+**Coding tools:** **`l3_runtime/tools/coding_tools.py`** registers **`strands_tools`** `python_repl`, `editor`, `shell`, and `journal` when **`build_neuuf_coordinator(..., include_coding_tools=True)`** (default). **`l1_router/google_chat.py`** passes **`include_coding_tools=False`** for Chat ingress.
 
 **Phase 5 Google Chat:** HTTP ingress in **`adapters/google_chat_app.py`**; event parsing and L1→L3 turn in **`l1_router/google_chat.py`**. DM vs **`ROOM`** uses `InboundContext.space_kind` and `build_neuuf_coordinator(..., google_chat_mode=...)`. See README for webhook secret and `iso-chat-webhook`.
 

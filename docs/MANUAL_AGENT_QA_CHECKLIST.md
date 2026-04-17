@@ -25,8 +25,16 @@ Check the terminal for `Tool #N: <tool_name>` lines. Adjust placeholders (`<...>
 | Perplexity MCP | `PERPLEXITY_API_KEY` + `ISO_AGENT_PERPLEXITY_TRANSPORT=docker` + Docker running |
 | Drive | `GOOGLE_APPLICATION_CREDENTIALS` + `ISO_AGENT_DRIVE_ENABLED=true` + allowlists |
 | Notion discovery | `NOTION_TOKEN` + `ISO_AGENT_NOTION_ENABLED=true` + `ISO_AGENT_NOTION_DISCOVERY_ENABLED=true` |
-| Notion strict read | `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` (comma UUIDs) |
-| Notion drafts | `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` (comma UUIDs) |
+| Notion strict read | `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` and/or persisted allowlist via **`notion_allowlist_add_read_page`** |
+| Notion drafts | `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` and/or **`notion_allowlist_add_draft_parent`** |
+
+### Troubleshooting: “the model says a Notion/Drive tool is missing”
+
+| Symptom | Cause | Fix |
+|--------|--------|-----|
+| **`notion_read_page`** returns **`no_read_allowlist`** (or **`notion_create_qms_draft`** returns **`no_draft_parent_allowlist`**) | Merged allowlist (env **∪** `memory/users/.../notion/allowlist.json`) is empty for that channel. | Call **`notion_allowlist_add_read_page`** / **`notion_allowlist_add_draft_parent`** after **`notion_discover_connected_pages`** (if discovery is on), or set the `ISO_AGENT_NOTION_ALLOWED_*` env vars. |
+| `drive_list_folder` says **folder not allowlisted** | The folder id is not in `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` (or typo). | Add that folder id to the comma list, or use an id already in the list. Share the folder with the service account email. |
+| **Perplexity / web** never used | `ISO_AGENT_PERPLEXITY_TRANSPORT` defaults to **disabled** or Docker not running. | `export ISO_AGENT_PERPLEXITY_TRANSPORT=docker` and start Docker; keep `PERPLEXITY_API_KEY`. |
 
 ---
 

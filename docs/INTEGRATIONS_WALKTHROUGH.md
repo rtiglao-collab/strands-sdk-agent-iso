@@ -128,8 +128,8 @@ iso-neuuf-coordinator --query "Use drive_read_document on file ID <allowlisted f
 **What it does:**
 
 - **`notion_discover_connected_pages`** (read-only) — when **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`**, lists pages the integration can access via Notion’s search API (id, title, parent, url). Scope is whatever you **shared with the integration** in the Notion UI.
-- **`notion_read_page`** — full plain-text read for **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** only (strict allowlist; use for controlled QMS pages).
-- **`notion_create_qms_draft`** — creates `[DRAFT]` children only under **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`**.
+- **`notion_read_page`** — full plain-text read for pages in the **merged** allowlist: **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** **∪** ids persisted for this user in **`memory/users/<user_key>/notion/allowlist.json`** (maintain via **`notion_allowlist_*`** tools).
+- **`notion_create_qms_draft`** — creates `[DRAFT]` children only under **merged** draft parents: **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** **∪** persisted parent ids in the same JSON file.
 
 Optional Drive evidence line in the draft body when your prompt supplies a link.
 
@@ -151,8 +151,9 @@ The 32-character hex UUID (**with or without hyphens** in env vars — both norm
 Decide:
 
 - **Discovery:** enable **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`** for workspace-style listing without putting every page id in env.
-- **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** — pages **`notion_read_page`** may fetch in full (narrow list).
-- **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** — parents under which **`notion_create_qms_draft`** may create children.
+- **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** — optional extra read ids (often empty if you use **`notion_allowlist_add_read_page`** from discovery).
+- **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** — optional extra draft parents (often empty if you use **`notion_allowlist_add_draft_parent`**).
+- **Persisted allowlist:** the coordinator can write **`notion/allowlist.json`** under the user’s **`memory/users/<user_key>/`** tree; it is **unioned** with the env vars and survives restarts without shell `export` churn.
 
 ### 3.3 Environment variables
 
@@ -164,7 +165,7 @@ export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='uuid-one,uuid-two'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='uuid-parent-for-drafts'
 ```
 
-You can enable discovery **without** parent/page allowlists; add allowlists only when you need **`notion_read_page`** / **`notion_create_qms_draft`**.
+You can enable discovery **without** env parent/page lists; use **`notion_allowlist_add_*`** (or set the env lists) before **`notion_read_page`** / **`notion_create_qms_draft`** will return content or create pages.
 
 ### 3.4 Verify (read-only first)
 
@@ -191,9 +192,11 @@ iso-neuuf-coordinator --query "Use notion_create_qms_draft with title '[DRAFT] I
 Example **local dev** block for `~/.zshrc` or a sourced `~/iso-agent.env` (**do not commit**):
 
 ```bash
-# LLM (AWS Bedrock — standard credential chain)
-export AWS_REGION='us-west-2'
-# export AWS_PROFILE='...'
+# LLM (default: Bedrock — AWS credential chain + region, e.g. profile or env vars)
+# export AWS_PROFILE=...   # or AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY where appropriate
+# export AWS_REGION=us-east-1
+# Optional explicit inference profile / model id:
+# export ISO_AGENT_BEDROCK_MODEL_ID='...'
 
 # Perplexity MCP (optional)
 export PERPLEXITY_API_KEY='pplx-...'

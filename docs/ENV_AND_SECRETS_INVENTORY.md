@@ -34,8 +34,8 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 | `ISO_AGENT_DRIVE_ALLOWED_FILE_IDS` | Optional comma-separated **file** IDs |
 | `ISO_AGENT_DRIVE_MAX_LIST` | Max list size (default 25, cap 100) |
 | `ISO_AGENT_NOTION_ENABLED` | `true` / `false` |
-| `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` | Comma-separated Notion **page** UUIDs (draft parents; required for ``notion_create_qms_draft``) |
-| `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` | Reserved (reads use pages shared with the integration) |
+| `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` | Comma-separated Notion **page** UUIDs (draft parents for ``notion_create_qms_draft``); merged with per-user ``memory/users/<user_key>/notion/allowlist.json`` |
+| `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` | Comma-separated Notion **page** UUIDs readable via ``notion_read_page``; merged with the same persisted file |
 | `ISO_AGENT_CHAT_WEBHOOK_SECRET` | Shared secret header value for Chat ingress |
 | `ISO_AGENT_CHAT_ALLOW_INSECURE` | `true` only for local dev without secret |
 | `ISO_AGENT_CHAT_DEDUPE_TTL_SECONDS` | Webhook dedupe window (seconds) |

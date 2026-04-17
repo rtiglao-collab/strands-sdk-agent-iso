@@ -39,6 +39,7 @@ iso_agent/
 │   ├── calendar_store.py
 │   ├── gap_store.py
 │   ├── memory_layout.py
+│   ├── notion_allowlist_store.py
 │   └── user_scope.py
 ├── l3_runtime
 │   ├── integrations
@@ -59,6 +60,7 @@ iso_agent/
 │   │   ├── __init__.py
 │   │   ├── audit_tools.py
 │   │   ├── calendar_tools.py
+│   │   ├── coding_tools.py
 │   │   ├── drive_tools.py
 │   │   ├── gap_tools.py
 │   │   └── notion_tools.py
@@ -88,6 +90,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `.cursor/rules/discovery-first.mdc`
 - `.cursor/rules/git-explicit-push.mdc`
 - `.cursor/rules/iso9001-product.mdc`
+- `.cursor/rules/llm-bedrock-only.mdc`
 - `.cursor/rules/python-strands.mdc`
 - `.cursor/rules/repo-maintenance.mdc`
 - `.cursor/rules/security-first.mdc`
@@ -97,11 +100,13 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `README.md`
 - `docs/ARCHITECTURE.md`
 - `docs/AUDIT_FLOW.md`
+- `docs/CAPABILITIES.md`
 - `docs/CAPABILITIES.template.md`
 - `docs/DOC_MAINTENANCE.md`
 - `docs/ENV_AND_SECRETS_INVENTORY.md`
 - `docs/INITIAL_SETUP.md`
 - `docs/INTEGRATIONS_WALKTHROUGH.md`
+- `docs/MANUAL_AGENT_QA_CHECKLIST.md`
 - `docs/NEUUF_ISO_PHASE_PLAN.md`
 - `docs/generated/INFRASTRUCTURE.md`
 - `docs/templates/gap_handoff_chat.md`
@@ -124,6 +129,8 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `references/STRANDS_OFFICIAL_DOCS.md`
 - `references/STRANDS_SAMPLES.md`
 - `references/STRANDS_SDK.md`
+- `scripts/dev_shell.sh`
+- `scripts/run_integration_smoke.py`
 - `scripts/sync_repo_docs.py`
 - `skills/README.md`
 - `src/iso_agent/__init__.py`

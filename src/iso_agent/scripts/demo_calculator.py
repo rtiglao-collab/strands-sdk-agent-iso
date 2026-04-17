@@ -13,8 +13,8 @@ def main() -> None:
         print(handle_user_message(scope, "What is the square root of 1764"))
     except Exception as exc:
         print(
-            f"Model call failed: {exc}. LLM is AWS Bedrock only: configure AWS credentials for Bedrock "
-            "(optional ISO_AGENT_BEDROCK_MODEL_ID / ISO_AGENT_BEDROCK_REGION_NAME)."
+            f"Model call failed: {exc}. Configure AWS credentials and region for Amazon Bedrock "
+            "(see README Model providers)."
         )
 
 

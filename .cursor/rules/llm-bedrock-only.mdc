@@ -5,6 +5,7 @@ alwaysApply: true
 
 # LLM invariant (Bedrock + Strands only)
 
-- **Do not** add `AnthropicModel`, `strands.models.anthropic`, `ANTHROPIC_API_KEY`, `strands-agents[anthropic]`, or any code path that calls Anthropic’s **direct** HTTP API for the default / stock Neuuf stack.
-- **Do** route all coordinator and specialist reasoning through **`get_default_model()`** in **`src/iso_agent/l3_runtime/default_model.py`**, which must remain **`BedrockModel`** (Amazon Bedrock Runtime, boto3 / IAM). FM choice is **`ISO_AGENT_BEDROCK_MODEL_ID`** (and related Bedrock settings), not a separate vendor API key.
-- If a task asks for “Anthropic,” interpret it as **Anthropic models on Bedrock** (inference profile / model id), unless the user explicitly requests a **different** Strands model provider **and** agrees to change `pyproject.toml`, `default_model.py`, and docs together.
+- **`get_default_model()`** in **`src/iso_agent/l3_runtime/default_model.py`** must return **`BedrockModel`** only. Do not add branches, settings, or dependencies that invoke Anthropic’s **direct** Messages API.
+- **Do not** add `AnthropicModel`, `strands.models.anthropic`, `ANTHROPIC_API_KEY`, `ISO_AGENT_ANTHROPIC_*`, `strands-agents[anthropic]`, or `llm_provider=anthropic` to this application. Claude and other FMs are used **through Bedrock** when available to the AWS account.
+- **Do** route all coordinator and specialist reasoning through **`get_default_model()`**. FM choice is **`ISO_AGENT_BEDROCK_MODEL_ID`** (and related Bedrock settings), plus the AWS credential chain — not a separate vendor API key.
+- If a task asks for “Anthropic,” interpret it as **Anthropic-built models on Amazon Bedrock** (inference profile / model id in **`ISO_AGENT_BEDROCK_MODEL_ID`**).

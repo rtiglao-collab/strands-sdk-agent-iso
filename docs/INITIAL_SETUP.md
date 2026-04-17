@@ -31,7 +31,7 @@ This document records the **first bootstrap** of the `iso-agent` host repository
 
 ## Packaging and tooling
 
-- **`pyproject.toml`**: `setuptools`, `src/` layout, dependencies `strands-agents`, `strands-agents-tools`, `mcp[cli]`, `pydantic`, `pydantic-settings`; optional extra `openai`; `dev` includes pytest, ruff, mypy, **pre-commit**.
+- **`pyproject.toml`**: `setuptools`, `src/` layout, dependencies `strands-agents`, `strands-agents-tools`, `mcp[cli]`, `pydantic`, `pydantic-settings`; optional extra `openai`; `dev` includes pytest, ruff, mypy, **pre-commit**. LLM path is **Bedrock only** (no `strands-agents[anthropic]` / direct Anthropic API in app code).
 - **Console scripts**: `iso-demo-calculator`, `iso-mcp-stdio`.
 - **Tests**: `tests/` mirroring critical helpers (e.g. memory paths, sync script parsers).
 - **`.vscode/tasks.json`**: “Sync repo docs”, “Pre-commit (all files)”.

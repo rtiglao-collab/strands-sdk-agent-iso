@@ -47,19 +47,16 @@ python scripts/sync_repo_docs.py
 
 `pre-commit` runs **gitleaks** (secret scanning), hygiene checks, and validates that **`docs/generated/INFRASTRUCTURE.md`** matches the repo layout. Regenerate that file with `python scripts/sync_repo_docs.py` whenever you add or move packages, scripts, or top-level docs or rules (see **`docs/DOC_MAINTENANCE.md`**).
 
+**Before running `iso-neuuf-coordinator`:** the coordinator uses **Amazon Bedrock only** (`get_default_model()` always returns **`BedrockModel`**). Configure **AWS credentials** (and region) the usual way for boto3. Optional **`ISO_AGENT_BEDROCK_MODEL_ID`** / **`ISO_AGENT_BEDROCK_REGION_NAME`**. This repo **does not** call Anthropic’s direct HTTP API — use Claude (or other FMs) **through Bedrock** only. Policy: **`.cursor/rules/llm-bedrock-only.mdc`**.
+
 **Note:** `pre-commit` expects a **git** repository in this directory (`git init` once if you have not already).
 
 VS Code / Cursor: run the task **“Sync repo docs (INFRASTRUCTURE.md)”** from `.vscode/tasks.json`.
 
-### Day-to-day (no reinstall every edit)
-
-- **`pip install -e ".[dev]"` is editable:** code under `src/` is used live on the next Python start. You do **not** need to re-run `pip install` after every change—only when **`pyproject.toml`** (dependencies, extras, scripts) changes.
-- **Load venv + `.env` in one step:** from the repo root, `source scripts/dev_shell.sh` activates `.venv` (if present) and **`source`s `.env`** into the current shell (`set -a` so `NOTION_TOKEN` and other non-`ISO_AGENT_*` keys export correctly). Or run `./scripts/dev_shell.sh` to open a **new** shell with the same setup.
-
 ## Commands
 
 - Demo calculator (Bedrock default unless you change the agent factory): `iso-demo-calculator` (see `iso_agent.l1_router.handler` for the L1 entrypoint)
-- **Neuuf ISO coordinator (CLI):** `iso-neuuf-coordinator` — interactive REPL by default; **`--query "..."`** for a single turn. Sets **`STRANDS_TOOL_CONSOLE_MODE=enabled`** automatically (same pattern as Strands `samples/.../05-personal-assistant/` for clearer tool output in the terminal); pass **`--plain-console`** to skip. Requires a configured Strands model (e.g. AWS credentials for default Bedrock). Alternatively set `ISO_AGENT_PRIMARY_MODE=neuuf` and call `handle_user_message` from your own host code.
+- **Neuuf ISO coordinator (CLI):** `iso-neuuf-coordinator` — interactive REPL by default; **`--query "..."`** for a single turn. Sets **`STRANDS_TOOL_CONSOLE_MODE=enabled`** automatically (same pattern as Strands `samples/.../05-personal-assistant/` for clearer tool output in the terminal); pass **`--plain-console`** to skip. **Coding tools** (`python_repl`, `editor`, `shell`, `journal` from `strands_tools`, matching that sample) are **always registered** on the coordinator for trusted entry points (CLI and in-process **`handle_user_message`**); pass **`--no-coding-tools`** on the CLI only if you want them off for that session. **Google Chat** uses the same factory but passes **`include_coding_tools=False`** so remote users never get shell or arbitrary file edit. Requires **AWS credentials** for **Amazon Bedrock** (no direct Anthropic API in this codebase). Alternatively set `ISO_AGENT_PRIMARY_MODE=neuuf` and call `handle_user_message` from your own host code.
 - Local MCP stdio server: `iso-mcp-stdio`
 - **Google Chat (Phase 5):** `iso-chat-webhook` — requires `pip install -e ".[chat]"` or dev extras (FastAPI + uvicorn). Uses the **same** Neuuf coordinator stack as the CLI (`handle_google_chat_turn` → `build_neuuf_coordinator`); configure Chat’s HTTP target to `POST /google-chat` and forward **`x-iso-agent-chat-secret`** (see Chat section below).
 
@@ -70,13 +67,13 @@ VS Code / Cursor: run the task **“Sync repo docs (INFRASTRUCTURE.md)”** from
 | **`iso-neuuf-coordinator`** | Local iteration, debugging prompts and tools with immediate stdin/stdout |
 | **`iso-chat-webhook`** + Chat app | Real users in DM or spaces; uses ingress adapter + webhook secret + dedupe metrics |
 
-Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs room rules) differs for Chat.
+Both execute the same L3 coordinator factory; only L1 (identity, thread, DM vs room rules) differs for Chat. **Coding tools** are on for CLI / in-process Neuuf; Chat wiring disables them at the factory (no env toggle).
 
 ## Model providers
 
-**Only path:** **AWS Bedrock** via Strands **`BedrockModel`**. All coordinator reasoning in stock code goes through **Bedrock Runtime** (boto3 / IAM / regional entitlements)—not Anthropic’s separate direct API. Strands may default to a **Claude-class Bedrock model id** when none is set; override with **`ISO_AGENT_BEDROCK_MODEL_ID`** to any **Bedrock foundation model or inference profile** your AWS account can invoke in that region (Claude, Nova, Llama, Mistral, etc., per Bedrock catalog and your allowlisting). Also set the **standard AWS / boto3 credential chain** (e.g. **`AWS_PROFILE`**, keys, instance role). Optional: **`ISO_AGENT_BEDROCK_REGION_NAME`**, **`ISO_AGENT_BEDROCK_MAX_TOKENS`**.
+**Only path:** **Amazon Bedrock** via **`BedrockModel()`** in **`get_default_model()`**. Configure the **AWS credential chain** and region; optional **`ISO_AGENT_BEDROCK_MODEL_ID`**, **`ISO_AGENT_BEDROCK_REGION_NAME`**, **`ISO_AGENT_BEDROCK_MAX_TOKENS`**. There is **no** `AnthropicModel`, **`ANTHROPIC_API_KEY`**, or direct Anthropic HTTP API in this application — use Claude **on Bedrock** when your account is entitled to that FM.
 
-**OpenAI (optional extra):** `pip install -e ".[openai]"` only if you add **custom** code that uses another Strands model provider; the stock Neuuf stack uses Bedrock only.
+**OpenAI (optional extra):** `pip install -e ".[openai]"` only if you add a separate OpenAI-based factory in custom code (not the stock Neuuf path).
 
 Settings live in **`src/iso_agent/config.py`** (`Settings` / `get_settings()`); the shared factory is **`src/iso_agent/l3_runtime/default_model.py`** (`get_default_model()`).
 
@@ -108,8 +105,9 @@ The Neuuf coordinator gains **`drive_list_folder`** and **`drive_read_document`*
 **Notion QMS (Phase 4):** `pip install iso-agent[notion]`, set **`NOTION_TOKEN`** (Notion internal integration secret), then:
 
 - `ISO_AGENT_NOTION_ENABLED=true`
-- `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` — comma-separated **page** UUIDs where **`notion_create_qms_draft`** may create children
-- `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` — comma-separated **page** UUIDs readable via **`notion_read_page`**
+- `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` — optional comma-separated **page** UUIDs where **`notion_create_qms_draft`** may create children (merged with per-user disk; see below)
+- `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` — optional comma-separated **page** UUIDs readable via **`notion_read_page`** (merged with per-user disk)
+- Optional **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`** — exposes **`notion_discover_connected_pages`** so the agent can find ids, then persist them with **`notion_allowlist_add_read_page`** / **`notion_allowlist_add_draft_parent`** (no long `export` lists required). Persisted ids live in **`memory/users/<user_key>/notion/allowlist.json`** and are unioned with the env vars on every tool call.
 
 Drafts include optional **Drive evidence** line when you pass `drive_link` into `notion_create_qms_draft`.
 

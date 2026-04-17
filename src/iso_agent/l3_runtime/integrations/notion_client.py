@@ -46,6 +46,17 @@ class _NotionClient(Protocol):
     def search(self, **kwargs: Any) -> Any: ...
 
 
+def page_exists(client: _NotionClient, *, page_id: str) -> bool:
+    """Return True if Notion returns a page for ``page_id`` (integration must have access)."""
+    pid = normalize_notion_page_id(page_id)
+    try:
+        client.pages().retrieve(page_id=pid)
+    except Exception:
+        return False
+    else:
+        return True
+
+
 def build_notion_client(token: str) -> _NotionClient:
     """Return a configured Notion SDK client."""
     from notion_client import Client

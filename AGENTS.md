@@ -2,7 +2,7 @@
 
 Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them for this workspace.
 
-**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`), **LLM stack** (`llm-bedrock-only.mdc` — Bedrock + Strands only; do not reintroduce direct Anthropic API wiring).
+**Always on:** discovery-first (`discovery-first.mdc`), scope discipline (`core-scope.mdc`), security (`security-first.mdc`), ISO-oriented product behavior (`iso9001-product.mdc`), repo maintenance (`repo-maintenance.mdc`), **LLM Bedrock-only policy** (`llm-bedrock-only.mdc` — no direct Anthropic API in this codebase).
 
 **When editing Python under `src/`:** `python-strands.mdc` (layers, Strands usage, imports).
 
@@ -18,7 +18,8 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `docs/INTEGRATIONS_WALKTHROUGH.md` | Operator steps to acquire credentials and env for Drive, Notion, Perplexity |
 | `references/STRANDS_SAMPLES.md` | Local samples repo path + map sample → Neuuf use case |
 | `src/iso_agent/l3_runtime/tools/drive_tools.py` | Phase 3 Drive read tools (allowlist + service account) |
-| `src/iso_agent/l3_runtime/tools/notion_tools.py` | Phase 4 Notion QMS draft + read (allowlist + `NOTION_TOKEN`) |
+| `src/iso_agent/l3_runtime/tools/notion_tools.py` + `l2_user/notion_allowlist_store.py` | Phase 4 Notion QMS draft + read; env ∪ persisted allowlist + `NOTION_TOKEN` |
+| `src/iso_agent/l3_runtime/tools/coding_tools.py` | `strands_tools` coding stack; on by default, off for Google Chat (`include_coding_tools`) |
 | `src/iso_agent/l1_router/google_chat.py` + `adapters/google_chat_app.py` | Phase 5 Google Chat parse + HTTP webhook (`iso-chat-webhook`) |
 | `src/iso_agent/l2_user/gap_store.py` + `l3_runtime/tools/gap_tools.py` | Phase 6 append-only gap JSONL + coordinator tools |
 | `docs/templates/gap_handoff_*.md` | Phase 6 Chat / Notion draft patterns from gap records |
@@ -27,7 +28,7 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `src/iso_agent/l2_user/audit_schedule.py` + `l3_runtime/tools/audit_tools.py` | Phase 7 audit cadence JSON + reminder helpers |
 | `docs/CAPABILITIES.template.md` | Copy to `CAPABILITIES.md` when you track real product capabilities |
 | `src/iso_agent/l3_runtime/team/*_tool.py` + `specialist_base.py` | Neuuf specialists as tools (one module per specialist; `subagents.py` aggregates) |
-| `src/iso_agent/l3_runtime/default_model.py` + `config.py` (Bedrock ids) | AWS Bedrock only (`BedrockModel`); Claude-class models via Bedrock model / inference profile ids |
+| `src/iso_agent/l3_runtime/default_model.py` + `config.py` (`ISO_AGENT_BEDROCK_*`) | **`BedrockModel` only** — no Anthropic direct API; see `llm-bedrock-only.mdc` |
 
 Fill `docs/CAPABILITIES.template.md` (or a derived `CAPABILITIES.md`) so agent claims stay aligned with what is actually wired.
 

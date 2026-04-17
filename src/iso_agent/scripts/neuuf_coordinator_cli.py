@@ -13,6 +13,18 @@ from iso_agent.l2_user import UserScope
 from iso_agent.l3_runtime.agents import create_neuuf_coordinator_agent
 
 
+def _format_agent_runtime_error(exc: Exception) -> str:
+    """Return a short error line; add Bedrock hint when message looks like an auth/config miss."""
+    msg = str(exc)
+    lower = msg.lower()
+    if "api_key" in lower or "auth_token" in lower or "authentication method" in lower:
+        return (
+            f"{msg} | hint: this host uses Amazon Bedrock only — configure AWS credentials "
+            "and region (see README Model providers)"
+        )
+    return msg
+
+
 def _print_agent_result(agent: object, result: object) -> None:
     """Emit final text only when stdout was not already streamed by the agent callback.
 
@@ -44,6 +56,11 @@ def main() -> None:
         action="store_true",
         help="Do not set STRANDS_TOOL_CONSOLE_MODE (disable richer tool UI in the terminal).",
     )
+    parser.add_argument(
+        "--no-coding-tools",
+        action="store_true",
+        help="Disable python_repl, editor, shell, and journal for this session (local CLI only).",
+    )
     args = parser.parse_args()
 
     if not args.plain_console:
@@ -53,19 +70,21 @@ def main() -> None:
     ctx = inbound_dm(user_id="local-dev", space="dm", thread="neuuf-cli")
     scope = UserScope.from_context(ctx)
     try:
-        agent = create_neuuf_coordinator_agent(scope)
+        agent = create_neuuf_coordinator_agent(scope, include_coding_tools=not args.no_coding_tools)
     except Exception as exc:
         print(
             f"Failed to initialize the coordinator agent: {exc}. "
-            "LLM is AWS Bedrock only (Strands BedrockModel): configure AWS credentials and region "
-            "(e.g. AWS_PROFILE, AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, or instance role) and "
-            "optional ISO_AGENT_BEDROCK_MODEL_ID / ISO_AGENT_BEDROCK_REGION_NAME.",
+            "The coordinator uses Amazon Bedrock only — configure AWS credentials and region.",
             file=sys.stderr,
         )
         raise SystemExit(1) from None
 
     if args.query is not None:
-        _print_agent_result(agent, agent(args.query))
+        try:
+            _print_agent_result(agent, agent(args.query))
+        except Exception as exc:  # noqa: BLE001
+            print(f"error: {_format_agent_runtime_error(exc)}", file=sys.stderr)
+            raise SystemExit(1) from None
         return
 
     print("Neuuf ISO coordinator — type 'exit', 'quit', or Ctrl+D to stop.")
@@ -87,7 +106,7 @@ def main() -> None:
             _print_agent_result(agent, agent(line))
             print()
         except Exception as exc:  # noqa: BLE001 — surface any model/tool error in the REPL
-            print(f"error: {exc}", file=sys.stderr)
+            print(f"error: {_format_agent_runtime_error(exc)}", file=sys.stderr)
 
 
 if __name__ == "__main__":
