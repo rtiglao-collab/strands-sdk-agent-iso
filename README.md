@@ -56,7 +56,7 @@ VS Code / Cursor: run the task **“Sync repo docs (INFRASTRUCTURE.md)”** from
 ## Commands
 
 - Demo calculator (Bedrock default unless you change the agent factory): `iso-demo-calculator` (see `iso_agent.l1_router.handler` for the L1 entrypoint)
-- **Neuuf ISO coordinator (CLI):** `iso-neuuf-coordinator` — interactive REPL by default; **`--query "..."`** for a single turn. Sets **`STRANDS_TOOL_CONSOLE_MODE=enabled`** automatically (same pattern as Strands `samples/.../05-personal-assistant/` for clearer tool output in the terminal); pass **`--plain-console`** to skip. **Coding tools** (`python_repl`, `editor`, `shell`, `journal` from `strands_tools`, matching that sample) are **always registered** on the coordinator for trusted entry points (CLI and in-process **`handle_user_message`**); pass **`--no-coding-tools`** on the CLI only if you want them off for that session. **Google Chat** uses the same factory but passes **`include_coding_tools=False`** so remote users never get shell or arbitrary file edit. Requires **AWS credentials** for **Amazon Bedrock** (no direct Anthropic API in this codebase). Alternatively set `ISO_AGENT_PRIMARY_MODE=neuuf` and call `handle_user_message` from your own host code.
+- **Neuuf ISO coordinator (CLI):** `iso-neuuf-coordinator` — interactive REPL by default; **`--query "..."`** for a single turn. Sets **`STRANDS_TOOL_CONSOLE_MODE=enabled`** automatically (same pattern as Strands `samples/.../05-personal-assistant/` for clearer tool output in the terminal); pass **`--plain-console`** to skip. For **coding tools** (`python_repl`, `editor`, `shell`, `journal`), the CLI defaults **`BYPASS_TOOL_CONSENT=true`** (Strands convention) so the model can run them **without** blocking on a `[y/*]` tty prompt after every tool call; pass **`--require-tool-consent`** to restore those confirmations. Pass **`--no-coding-tools`** to omit coding tools for this session. **Google Chat** uses the same factory but passes **`include_coding_tools=False`**. **`handle_user_message`** does not set `BYPASS_TOOL_CONSENT`; export it yourself on trusted hosts if you enable coding tools there. Requires **AWS credentials** for **Amazon Bedrock**. Alternatively set `ISO_AGENT_PRIMARY_MODE=neuuf` and call `handle_user_message` from your own host code.
 - Local MCP stdio server: `iso-mcp-stdio`
 - **Google Chat (Phase 5):** `iso-chat-webhook` — requires `pip install -e ".[chat]"` or dev extras (FastAPI + uvicorn). Uses the **same** Neuuf coordinator stack as the CLI (`handle_google_chat_turn` → `build_neuuf_coordinator`); configure Chat’s HTTP target to `POST /google-chat` and forward **`x-iso-agent-chat-secret`** (see Chat section below).
 
@@ -102,14 +102,15 @@ See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, sc
 
 The Neuuf coordinator gains **`drive_list_folder`** and **`drive_read_document`** tools (allowlist-enforced).
 
-**Notion QMS (Phase 4):** `pip install iso-agent[notion]`, set **`NOTION_TOKEN`** (Notion internal integration secret), then:
+**Notion QMS (Phase 4):** `pip install iso-agent[notion]`, set **`NOTION_TOKEN`** (Notion internal integration secret). Notion tools register when the token is present (default). Set **`ISO_AGENT_NOTION_ENABLED=false`** to disable them even with a token.
 
-- `ISO_AGENT_NOTION_ENABLED=true`
 - `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` — optional comma-separated **page** UUIDs where **`notion_create_qms_draft`** may create children (merged with per-user disk; see below)
 - `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` — optional comma-separated **page** UUIDs readable via **`notion_read_page`** (merged with per-user disk)
-- Optional **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`** — exposes **`notion_discover_connected_pages`** so the agent can find ids, then persist them with **`notion_allowlist_add_read_page`** / **`notion_allowlist_add_draft_parent`** (no long `export` lists required). Persisted ids live in **`memory/users/<user_key>/notion/allowlist.json`** and are unioned with the env vars on every tool call.
+- **`notion_discover_connected_pages`** (read-only search) is **on by default** when Notion tools load; set **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`** to hide it. Use it to find ids, then persist with **`notion_allowlist_add_read_page`** / **`notion_allowlist_add_draft_parent`**. Persisted ids live in **`memory/users/<user_key>/notion/allowlist.json`** and are unioned with the env vars on every tool call.
 
 Drafts include optional **Drive evidence** line when you pass `drive_link` into `notion_create_qms_draft`.
+
+**Notion hosted MCP (optional):** set **`ISO_AGENT_NOTION_TRANSPORT`** to **`hybrid`** or **`mcp_primary`**, then run **`iso-notion-mcp-login`** (or **`iso-neuuf-coordinator --notion-mcp-login`**) to store OAuth tokens in **`memory/users/<user_key>/notion/mcp_oauth.json`**. MCP tools are prefixed **`notion_mcp_`**. This is **separate** from **`NOTION_TOKEN`** REST tools—see **`docs/NOTION_MCP.md`**.
 
 **Calendar & audits (Phase 7):** Per-user **local SQLite** calendar (`iso_calendar_*` under `memory/users/<user_key>/calendar/`) and **audit cadence** file (`audit_*` tools, `memory/.../audits/schedule.json`). **`current_time`** is on the coordinator for relative dates. **Not** Google Calendar or registrar automation—see **`docs/AUDIT_FLOW.md`**.
 

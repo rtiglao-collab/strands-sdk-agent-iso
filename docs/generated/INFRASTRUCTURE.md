@@ -16,10 +16,11 @@ Then commit this file. Pre-commit runs `sync_repo_docs.py --check`.
 | `iso-demo-calculator` | `iso_agent.scripts.demo_calculator:main` |
 | `iso-mcp-stdio` | `iso_agent.mcp.stdio_server:main` |
 | `iso-neuuf-coordinator` | `iso_agent.scripts.neuuf_coordinator_cli:main` |
+| `iso-notion-mcp-login` | `iso_agent.scripts.notion_mcp_login:main` |
 
 ## Optional dependency groups
 
-`chat`, `dev`, `drive`, `notion`, `openai`
+`chat`, `dev`, `drive`, `notion`, `notion-mcp`, `openai`
 
 ## Package tree (`src/iso_agent/`)
 
@@ -40,12 +41,15 @@ iso_agent/
 │   ├── gap_store.py
 │   ├── memory_layout.py
 │   ├── notion_allowlist_store.py
+│   ├── notion_page_index_store.py
 │   └── user_scope.py
 ├── l3_runtime
 │   ├── integrations
 │   │   ├── __init__.py
 │   │   ├── drive_client.py
 │   │   ├── notion_client.py
+│   │   ├── notion_mcp.py
+│   │   ├── notion_mcp_oauth.py
 │   │   └── perplexity.py
 │   ├── team
 │   │   ├── __init__.py
@@ -76,7 +80,8 @@ iso_agent/
 │   ├── __init__.py
 │   ├── demo_calculator.py
 │   ├── iso_chat_webhook.py
-│   └── neuuf_coordinator_cli.py
+│   ├── neuuf_coordinator_cli.py
+│   └── notion_mcp_login.py
 ├── __init__.py
 ├── config.py
 └── paths.py
@@ -146,6 +151,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/l2_user/calendar_store.py`
 - `src/iso_agent/l2_user/gap_store.py`
 - `src/iso_agent/l2_user/memory_layout.py`
+- `src/iso_agent/l2_user/notion_allowlist_store.py`
 - `src/iso_agent/l2_user/user_scope.py`
 - `src/iso_agent/l3_runtime/__init__.py`
 - `src/iso_agent/l3_runtime/agents.py`
@@ -167,6 +173,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/l3_runtime/tools/__init__.py`
 - `src/iso_agent/l3_runtime/tools/audit_tools.py`
 - `src/iso_agent/l3_runtime/tools/calendar_tools.py`
+- `src/iso_agent/l3_runtime/tools/coding_tools.py`
 - `src/iso_agent/l3_runtime/tools/drive_tools.py`
 - `src/iso_agent/l3_runtime/tools/gap_tools.py`
 - `src/iso_agent/l3_runtime/tools/notion_tools.py`
@@ -177,6 +184,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/scripts/demo_calculator.py`
 - `src/iso_agent/scripts/iso_chat_webhook.py`
 - `src/iso_agent/scripts/neuuf_coordinator_cli.py`
+- `tests/test_coordinator_coding_tools.py`
 - `tests/test_default_model.py`
 - `tests/test_drive_tools.py`
 - `tests/test_gap_store.py`
@@ -185,6 +193,7 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `tests/test_google_chat_parse.py`
 - `tests/test_memory_layout.py`
 - `tests/test_neuuf_coordinator_cli.py`
+- `tests/test_notion_allowlist_store.py`
 - `tests/test_notion_tools.py`
 - `tests/test_perplexity.py`
 - `tests/test_phase7_calendar_audit.py`

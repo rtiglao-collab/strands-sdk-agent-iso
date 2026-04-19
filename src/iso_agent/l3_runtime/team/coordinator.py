@@ -7,6 +7,7 @@ from strands_tools import current_time
 
 from iso_agent.l2_user.user_scope import UserScope
 from iso_agent.l3_runtime.default_model import get_default_model
+from iso_agent.l3_runtime.integrations.notion_mcp import get_notion_mcp_tools
 from iso_agent.l3_runtime.prompts import load_role_prompt
 from iso_agent.l3_runtime.team.subagents import build_specialist_tools
 from iso_agent.l3_runtime.tools.audit_tools import build_audit_tools
@@ -41,6 +42,10 @@ def build_neuuf_coordinator(
         system_prompt = f"{scope_ctx}\n\n{base}\n\n{room_rules}"
     else:
         system_prompt = f"{scope_ctx}\n\n{base}"
+    if include_coding_tools:
+        coding_precursor = load_role_prompt("coding_precursor")
+        system_prompt = f"{system_prompt}\n\n---\n\n{coding_precursor}"
+    mcp_notion = get_notion_mcp_tools(scope)
     tools = [
         current_time,
         *build_specialist_tools(scope),
@@ -49,6 +54,7 @@ def build_neuuf_coordinator(
         *build_audit_tools(scope),
         *build_drive_tools(scope),
         *build_notion_tools(scope),
+        *(mcp_notion or []),
         *build_coding_tools(scope, enabled=include_coding_tools),
     ]
     return Agent(

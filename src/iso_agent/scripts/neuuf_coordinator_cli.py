@@ -61,7 +61,41 @@ def main() -> None:
         action="store_true",
         help="Disable python_repl, editor, shell, and journal for this session (local CLI only).",
     )
+    parser.add_argument(
+        "--notion-mcp-login",
+        action="store_true",
+        help="Notion MCP OAuth login then exit (writes mcp_oauth.json under scoped memory).",
+    )
+    parser.add_argument(
+        "--notion-mcp-login-user-id",
+        default="local-dev",
+        help="User id for memory scoping during --notion-mcp-login (default: local-dev).",
+    )
+    parser.add_argument(
+        "--require-tool-consent",
+        action="store_true",
+        help=(
+            "Require [y/*] confirmation for python_repl, editor, shell "
+            "(Strands BYPASS_TOOL_CONSENT). Default: CLI opts out for autonomous tool runs."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.notion_mcp_login:
+        from iso_agent.l3_runtime.integrations.notion_mcp import run_notion_mcp_interactive_login
+
+        ctx = inbound_dm(
+            user_id=args.notion_mcp_login_user_id, space="dm", thread="notion-mcp-login"
+        )
+        scope = UserScope.from_context(ctx)
+        run_notion_mcp_interactive_login(scope, open_browser=True)
+        return
+
+    if args.require_tool_consent:
+        os.environ["BYPASS_TOOL_CONSENT"] = "false"
+    else:
+        # Without this, strands_tools block each repl/editor/shell with a tty prompt
+        os.environ.setdefault("BYPASS_TOOL_CONSENT", "true")
 
     if not args.plain_console:
         # Show rich UI for tools in CLI
@@ -90,7 +124,8 @@ def main() -> None:
     print("Neuuf ISO coordinator — type 'exit', 'quit', or Ctrl+D to stop.")
     print(
         "Tip: STRANDS_TOOL_CONSOLE_MODE is enabled for clearer tool traces "
-        "(use --plain-console to disable)."
+        "(use --plain-console to disable). BYPASS_TOOL_CONSENT defaults to true so coding tools "
+        "run without per-tool [y/*] prompts (use --require-tool-consent for confirmations)."
     )
     while True:
         try:

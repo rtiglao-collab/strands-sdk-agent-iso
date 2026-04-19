@@ -15,6 +15,17 @@
 
 The **Neuuf ISO coordinator** lives under **`src/iso_agent/l3_runtime/team/`**: a primary `Agent` plus **specialists as tools** (same pattern as `samples/02-samples/05-personal-assistant/`). Each specialist’s Python wrapper lives in its own module (e.g. **`researcher_tool.py`**); prompts stay markdown under **`knowledge/agents/`** (`neuuf_coordinator`, `researcher`, `governance_evidence`, `gap_analyst`, `comms_coordinator`). Set `ISO_AGENT_PRIMARY_MODE=neuuf` so **`l1_router/handler.py`** routes to this team, or run **`iso-neuuf-coordinator`** for a dedicated interactive CLI (optional `STRANDS_TOOL_CONSOLE_MODE` for clearer tool traces). Roadmap: **`docs/NEUUF_ISO_PHASE_PLAN.md`**.
 
+#### Checklist: adding a new specialist or agent surface
+
+Follow **`.cursor/rules/new-specialists-and-agents.mdc`** so every addition matches existing practice:
+
+1. **`team/<name>_tool.py`** + **`build_<name>_tools(scope)`** using **`build_inner_specialist`** and **`get_default_model()`** (Bedrock only).
+2. **`subagents.py`** — register the new `build_*_tools` in **`build_specialist_tools`**.
+3. **`knowledge/agents/<role>.md`** — role prompt; no duplicate long system text in Python.
+4. **`tests/`** — add or extend tests for the new module; keep mocks consistent with sibling specialists.
+5. **`AGENTS.md`** / **`docs/ARCHITECTURE.md`** — update if behavior or layout is user-visible.
+6. **`python scripts/sync_repo_docs.py`** — run when packages, scripts, rules, or tree layout change (`pre-commit` enforces check mode).
+
 ## Suggested data flow
 
 ```text
@@ -59,7 +70,7 @@ For Strands behavior and conventions, use the **local SDK checkout** path and re
 
 **Phase 3 Drive:** Read-only tools in **`l3_runtime/tools/drive_tools.py`** with client helpers in **`l3_runtime/integrations/drive_client.py`**; merged on the **coordinator** `Agent` in **`l3_runtime/team/coordinator.py`**. Requires optional `iso-agent[drive]` install and allowlisted folder/file IDs (see README).
 
-**Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`** with **`l3_runtime/integrations/notion_client.py`**; allowlists are **env ∪ per-user persisted JSON** via **`l2_user/notion_allowlist_store.py`**. Requires `iso-agent[notion]`, **`NOTION_TOKEN`**, and at least one read/parent id (env or file) before read/create succeed (see README).
+**Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`** with **`l3_runtime/integrations/notion_client.py`**; allowlists are **env ∪ per-user persisted JSON** via **`l2_user/notion_allowlist_store.py`**. Optional hosted **Notion MCP** (user OAuth, **`l3_runtime/integrations/notion_mcp.py`** + **`notion_mcp_oauth.py`**) merges on the coordinator when **`ISO_AGENT_NOTION_TRANSPORT`** is `hybrid` or `mcp_primary` and **`memory/users/.../notion/mcp_oauth.json`** exists (`docs/NOTION_MCP.md`). Requires `iso-agent[notion]`, **`NOTION_TOKEN`**, and at least one read/parent id (env or file) before read/create succeed (see README).
 
 **Coding tools:** **`l3_runtime/tools/coding_tools.py`** registers **`strands_tools`** `python_repl`, `editor`, `shell`, and `journal` when **`build_neuuf_coordinator(..., include_coding_tools=True)`** (default). **`l1_router/google_chat.py`** passes **`include_coding_tools=False`** for Chat ingress.
 

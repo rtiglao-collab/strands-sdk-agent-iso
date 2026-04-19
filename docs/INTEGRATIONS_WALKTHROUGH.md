@@ -127,9 +127,15 @@ iso-neuuf-coordinator --query "Use drive_read_document on file ID <allowlisted f
 
 **What it does:**
 
-- **`notion_discover_connected_pages`** (read-only) — when **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`**, lists pages the integration can access via Notion’s search API (id, title, parent, url). Scope is whatever you **shared with the integration** in the Notion UI.
+- **`notion_discover_connected_pages`** (read-only) — **on by default**; lists pages the integration can access via Notion’s search API (id, title, parent, url). Set **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`** to hide this tool. Scope is whatever you **shared with the integration** in the Notion UI.
 - **`notion_read_page`** — full plain-text read for pages in the **merged** allowlist: **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** **∪** ids persisted for this user in **`memory/users/<user_key>/notion/allowlist.json`** (maintain via **`notion_allowlist_*`** tools).
 - **`notion_create_qms_draft`** — creates `[DRAFT]` children only under **merged** draft parents: **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** **∪** persisted parent ids in the same JSON file.
+- **`notion_refresh_page_index`** / **`notion_search_page_index`** / **`notion_page_index_status`** — persist a per-user title→id snapshot under **`memory/users/<user_key>/notion/`** for quick lookup without pasting UUIDs into every user message.
+- **`notion_list_draft_parents`** — prints merged draft parent ids with titles from that index (refresh first if titles are missing).
+- **`notion_list_pages_under_parent`** — lists **direct child** pages already present in the index under a parent you identify by **`parent_title_substring`** (unique among merged draft parents **and** merged read pages) or by **`parent_page_id`** (must still be allowlisted as read or draft parent).
+- **`notion_create_qms_draft_for_parent_title`** — same as **`notion_create_qms_draft`** but resolves the draft parent by a **unique** title substring against merged draft parents (no raw UUID in the human prompt when titles are distinctive).
+- **`notion_bootstrap_draft_parent_choices`** — numbered list from the index (workspace-top-level sorts first) when **no draft parents** are configured yet; optional **`search_text`** filters titles.
+- **`notion_allowlist_add_draft_parent_by_choice`** — adds the draft parent for **choice=1..N** from the latest bootstrap list; **`search_text`** and **`max_options`** must match that bootstrap call exactly.
 
 Optional Drive evidence line in the draft body when your prompt supplies a link.
 
@@ -150,7 +156,7 @@ The 32-character hex UUID (**with or without hyphens** in env vars — both norm
 
 Decide:
 
-- **Discovery:** enable **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=true`** for workspace-style listing without putting every page id in env.
+- **Discovery:** enabled by default; use **`notion_discover_connected_pages`** for listing without pasting every page id in env. Set **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`** only if you want to hide the discover tool.
 - **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** — optional extra read ids (often empty if you use **`notion_allowlist_add_read_page`** from discovery).
 - **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** — optional extra draft parents (often empty if you use **`notion_allowlist_add_draft_parent`**).
 - **Persisted allowlist:** the coordinator can write **`notion/allowlist.json`** under the user’s **`memory/users/<user_key>/`** tree; it is **unioned** with the env vars and survives restarts without shell `export` churn.
@@ -159,8 +165,8 @@ Decide:
 
 ```bash
 export NOTION_TOKEN='secret_...'
-export ISO_AGENT_NOTION_ENABLED=true
-export ISO_AGENT_NOTION_DISCOVERY_ENABLED=true
+# ISO_AGENT_NOTION_ENABLED defaults true; use false to disable Notion tools.
+# ISO_AGENT_NOTION_DISCOVERY_ENABLED defaults true (notion_discover_connected_pages).
 export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='uuid-one,uuid-two'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='uuid-parent-for-drafts'
 ```
@@ -174,14 +180,30 @@ iso-neuuf-coordinator --query "Call notion_discover_connected_pages with query '
 iso-neuuf-coordinator --query "Call notion_read_page on one allowlisted page UUID and return the first 500 characters."
 ```
 
-Draft smoke (writes Notion):
+Draft smoke (writes Notion) — **without pasting a parent UUID** once the index knows parent titles:
 
 ```bash
-iso-neuuf-coordinator --query "Use notion_create_qms_draft with title '[DRAFT] ISO agent smoke' and a one-paragraph body."
+iso-neuuf-coordinator --query "Call notion_refresh_page_index with query '' then notion_list_draft_parents. Then notion_create_qms_draft_for_parent_title with parent_title_substring=<unique substring of your draft parent title>, title='ISO agent smoke', body='One paragraph.'"
+```
+
+Or with an explicit parent id (classic):
+
+```bash
+iso-neuuf-coordinator --query "Use notion_create_qms_draft with parent_page_id=<uuid>, title='ISO agent smoke', body='One paragraph.'"
 ```
 
 **Pass:** discovery lists shared pages; allowlisted read returns content; draft appears under the allowlisted parent.  
 **Fail:** 401 → token wrong; 404 / empty discovery → page not shared with integration or wrong UUID.
+
+### 3.5 Notion hosted MCP (OAuth, optional)
+
+Hosted Notion MCP uses **user OAuth** (PKCE + dynamic client registration), not `NOTION_TOKEN`. It is wired into the same coordinator when **`ISO_AGENT_NOTION_TRANSPORT`** is **`hybrid`** or **`mcp_primary`** and **`memory/users/<user_key>/notion/mcp_oauth.json`** exists.
+
+1. Set transport to `hybrid` (recommended first) or `mcp_primary`.
+2. Run **`iso-notion-mcp-login`** (or **`iso-neuuf-coordinator --notion-mcp-login`**) and finish the browser flow.
+3. Restart the coordinator; MCP tools appear with the **`notion_mcp_`** prefix.
+
+See **`docs/NOTION_MCP.md`** for parity checklist, redirect URI defaults, and `mcp_primary` behavior (REST discovery tool is hidden when the OAuth file is present).
 
 **Script:** `python scripts/run_integration_smoke.py` runs discovery + Drive gap-file probe + Perplexity config (no LLM).
 
@@ -209,8 +231,7 @@ export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='...'
 
 # Notion (optional)
 export NOTION_TOKEN='secret_...'
-export ISO_AGENT_NOTION_ENABLED=true
-export ISO_AGENT_NOTION_DISCOVERY_ENABLED=true
+# export ISO_AGENT_NOTION_DISCOVERY_ENABLED=false  # only if you want to hide discover
 export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='...'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='...'
 ```
@@ -225,7 +246,7 @@ Reload: `source ~/iso-agent.env`, then `iso-neuuf-coordinator`.
 |-------------|----------------|--------|
 | Perplexity | [`src/iso_agent/config.py`](../src/iso_agent/config.py) `perplexity_transport`; `PERPLEXITY_API_KEY` | [`src/iso_agent/l3_runtime/integrations/perplexity.py`](../src/iso_agent/l3_runtime/integrations/perplexity.py) → [`researcher_tool.py`](../src/iso_agent/l3_runtime/team/researcher_tool.py) |
 | Drive | `ISO_AGENT_DRIVE_*` in `Settings` | [`drive_tools.py`](../src/iso_agent/l3_runtime/tools/drive_tools.py) |
-| Notion | `ISO_AGENT_NOTION_*`, `NOTION_TOKEN` | [`notion_tools.py`](../src/iso_agent/l3_runtime/tools/notion_tools.py) |
+| Notion | `ISO_AGENT_NOTION_*`, `NOTION_TOKEN`, optional MCP transport (`docs/NOTION_MCP.md`) | [`notion_tools.py`](../src/iso_agent/l3_runtime/tools/notion_tools.py), [`notion_mcp.py`](../src/iso_agent/l3_runtime/integrations/notion_mcp.py) |
 
 ---
 

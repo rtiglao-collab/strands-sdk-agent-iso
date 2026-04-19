@@ -47,8 +47,9 @@ class Settings(BaseSettings):
     #: Max files returned by ``drive_list_folder`` (capped at 100).
     drive_max_list: int = 25
 
-    #: Notion QMS tools on the coordinator (Phase 4).
-    notion_enabled: bool = False
+    #: Notion QMS tools on the coordinator (Phase 4). Defaults ``true``; set
+    #: ``ISO_AGENT_NOTION_ENABLED=false`` to omit tools even when ``NOTION_TOKEN`` is set.
+    notion_enabled: bool = True
 
     #: Comma-separated Notion **page** UUIDs where **child drafts** may be created.
     notion_allowed_parent_ids: str = ""
@@ -57,8 +58,19 @@ class Settings(BaseSettings):
     notion_allowed_page_ids: str = ""
 
     #: When ``notion_enabled``, expose read-only ``notion_discover_connected_pages``
-    #: (Notion search: pages the integration can access). Draft/read allowlists stay separate.
-    notion_discovery_enabled: bool = False
+    #: (Notion search: pages the integration can access). Defaults ``true``; set
+    #: ``ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`` to hide that tool only.
+    notion_discovery_enabled: bool = True
+
+    #: ``rest_only`` (default): no hosted Notion MCP tools.
+    #: ``hybrid`` / ``mcp_primary`` register MCP tools when ``mcp_oauth.json`` exists (login CLI).
+    notion_transport: Literal["rest_only", "hybrid", "mcp_primary"] = "rest_only"
+
+    #: Notion hosted MCP streamable HTTP URL (`Other tools` in Notion docs).
+    notion_mcp_url: str = "https://mcp.notion.com/mcp"
+
+    #: OAuth redirect URI (must match the localhost listener in ``iso-notion-mcp-login``).
+    notion_mcp_redirect_uri: str = "http://127.0.0.1:8765/callback"
 
 
 @lru_cache
