@@ -7,7 +7,10 @@ from strands_tools import current_time
 
 from iso_agent.l2_user.user_scope import UserScope
 from iso_agent.l3_runtime.default_model import get_default_model
-from iso_agent.l3_runtime.integrations.notion_mcp import get_notion_mcp_tools
+from iso_agent.l3_runtime.integrations.notion_mcp import (
+    build_notion_mcp_oauth_tool,
+    get_notion_mcp_tools,
+)
 from iso_agent.l3_runtime.prompts import load_role_prompt
 from iso_agent.l3_runtime.team.subagents import build_specialist_tools
 from iso_agent.l3_runtime.tools.audit_tools import build_audit_tools
@@ -23,12 +26,15 @@ def build_neuuf_coordinator(
     *,
     google_chat_mode: Literal["dm", "room"] = "dm",
     include_coding_tools: bool = True,
+    include_notion_mcp_oauth_tool: bool = False,
 ) -> Agent:
     """Return the Neuuf ISO coordinator :class:`~strands.agent.agent.Agent` for this scope.
 
     Args:
         scope: User-scoped memory and thread partition.
         google_chat_mode: ``room`` appends stricter shared-space instructions (Phase 5).
+        include_notion_mcp_oauth_tool: When true, register in-process Notion MCP browser login
+            (local interactive CLI only; keep false for Chat and one-shot ``--query``).
         include_coding_tools: When true (default), register ``python_repl``, ``editor``,
             ``shell``, and ``journal``. Google Chat ingress should pass false.
     """
@@ -46,6 +52,9 @@ def build_neuuf_coordinator(
         coding_precursor = load_role_prompt("coding_precursor")
         system_prompt = f"{system_prompt}\n\n---\n\n{coding_precursor}"
     mcp_notion = get_notion_mcp_tools(scope)
+    oauth_tool = (
+        build_notion_mcp_oauth_tool(scope) if include_notion_mcp_oauth_tool else []
+    )
     tools = [
         current_time,
         *build_specialist_tools(scope),
@@ -54,6 +63,7 @@ def build_neuuf_coordinator(
         *build_audit_tools(scope),
         *build_drive_tools(scope),
         *build_notion_tools(scope),
+        *oauth_tool,
         *(mcp_notion or []),
         *build_coding_tools(scope, enabled=include_coding_tools),
     ]

@@ -93,5 +93,6 @@ def handle_google_chat_turn(ctx: InboundContext, text: str) -> str:
         scope,
         google_chat_mode=mode,
         include_coding_tools=False,
+        include_notion_mcp_oauth_tool=False,
     )
     return str(agent(text))

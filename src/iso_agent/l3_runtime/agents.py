@@ -32,8 +32,13 @@ def create_neuuf_coordinator_agent(
     scope: UserScope,
     *,
     include_coding_tools: bool = True,
+    include_notion_mcp_oauth_tool: bool = False,
 ) -> Agent:
     """Neuuf ISO coordinator (agents-as-tools). See ``docs/NEUUF_ISO_PHASE_PLAN.md``."""
     from iso_agent.l3_runtime.team.coordinator import build_neuuf_coordinator
 
-    return build_neuuf_coordinator(scope, include_coding_tools=include_coding_tools)
+    return build_neuuf_coordinator(
+        scope,
+        include_coding_tools=include_coding_tools,
+        include_notion_mcp_oauth_tool=include_notion_mcp_oauth_tool,
+    )

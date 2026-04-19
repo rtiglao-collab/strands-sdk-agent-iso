@@ -110,7 +110,7 @@ The Neuuf coordinator gains **`drive_list_folder`** and **`drive_read_document`*
 
 Drafts include optional **Drive evidence** line when you pass `drive_link` into `notion_create_qms_draft`.
 
-**Notion hosted MCP (optional):** set **`ISO_AGENT_NOTION_TRANSPORT`** to **`hybrid`** or **`mcp_primary`**, then run **`iso-notion-mcp-login`** (or **`iso-neuuf-coordinator --notion-mcp-login`**) to store OAuth tokens in **`memory/users/<user_key>/notion/mcp_oauth.json`**. MCP tools are prefixed **`notion_mcp_`**. This is **separate** from **`NOTION_TOKEN`** REST tools—see **`docs/NOTION_MCP.md`**.
+**Notion hosted MCP (optional):** defaults to **`hybrid`** (`ISO_AGENT_NOTION_TRANSPORT`); with **`mcp_oauth.json`** the coordinator loads **`notion_mcp_*`** tools. From **`iso-neuuf-coordinator`** you can ask the agent to run **`notion_mcp_oauth_interactive_login`** once, or use **`iso-notion-mcp-login`** / **`--notion-mcp-login`**. Set **`rest_only`** to disable MCP. This is **separate** from **`NOTION_TOKEN`** REST tools—see **`docs/NOTION_MCP.md`**.
 
 **Calendar & audits (Phase 7):** Per-user **local SQLite** calendar (`iso_calendar_*` under `memory/users/<user_key>/calendar/`) and **audit cadence** file (`audit_*` tools, `memory/.../audits/schedule.json`). **`current_time`** is on the coordinator for relative dates. **Not** Google Calendar or registrar automation—see **`docs/AUDIT_FLOW.md`**.
 

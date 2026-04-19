@@ -62,9 +62,9 @@ class Settings(BaseSettings):
     #: ``ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`` to hide that tool only.
     notion_discovery_enabled: bool = True
 
-    #: ``rest_only`` (default): no hosted Notion MCP tools.
-    #: ``hybrid`` / ``mcp_primary`` register MCP tools when ``mcp_oauth.json`` exists (login CLI).
-    notion_transport: Literal["rest_only", "hybrid", "mcp_primary"] = "rest_only"
+    #: ``hybrid`` (default): merge hosted Notion MCP tools when ``mcp_oauth.json`` exists.
+    #: ``rest_only`` disables MCP; ``mcp_primary`` prefers MCP for discovery (see docs).
+    notion_transport: Literal["rest_only", "hybrid", "mcp_primary"] = "hybrid"
 
     #: Notion hosted MCP streamable HTTP URL (`Other tools` in Notion docs).
     notion_mcp_url: str = "https://mcp.notion.com/mcp"

@@ -11,7 +11,7 @@ Official references:
 
 | Env | Meaning |
 |-----|---------|
-| `ISO_AGENT_NOTION_TRANSPORT` | `rest_only` (default), `hybrid`, or `mcp_primary` |
+| `ISO_AGENT_NOTION_TRANSPORT` | `hybrid` (default), `rest_only`, or `mcp_primary` |
 | `ISO_AGENT_NOTION_MCP_URL` | Defaults to `https://mcp.notion.com/mcp` |
 | `ISO_AGENT_NOTION_MCP_REDIRECT_URI` | Defaults to `http://127.0.0.1:8765/callback` (must match the login listener) |
 
@@ -19,9 +19,9 @@ Official references:
 
 ## Login (first-time OAuth)
 
-1. Set `ISO_AGENT_NOTION_TRANSPORT=hybrid` or `mcp_primary`.
-2. Run **`iso-notion-mcp-login`** (same memory scope as `iso-neuuf-coordinator` when you pass `--user-id local-dev`), or **`iso-neuuf-coordinator --notion-mcp-login`**.
-3. Complete the browser consent flow; tokens are written to `memory/users/<user_key>/notion/mcp_oauth.json`.
+1. Transport defaults to **`hybrid`**; use **`mcp_primary`** only if you want REST discovery hidden when OAuth exists (see below).
+2. Either run **`iso-notion-mcp-login`** / **`iso-neuuf-coordinator --notion-mcp-login`**, or start **`iso-neuuf-coordinator`** and ask the agent to call **`notion_mcp_oauth_interactive_login`** (interactive REPL only).
+3. Complete the browser consent flow; tokens are written to `memory/users/<user_key>/notion/mcp_oauth.json`. The REPL reloads the coordinator after in-process login so **`notion_mcp_*`** tools appear on the next turn.
 
 ## REST vs MCP parity (manual checklist)
 

@@ -88,3 +88,17 @@ def test_reset_notion_mcp_for_tests_closes_singleton(monkeypatch: pytest.MonkeyP
     notion_mcp.get_notion_mcp_tools(scope)
     notion_mcp.reset_notion_mcp_for_tests()
     assert _Fake.exited is True
+
+
+def test_notion_mcp_oauth_tool_when_repl_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ISO_AGENT_NOTION_TRANSPORT", "hybrid")
+    get_settings.cache_clear()
+    agent = build_neuuf_coordinator(
+        _scope(), include_coding_tools=False, include_notion_mcp_oauth_tool=True
+    )
+    assert "notion_mcp_oauth_interactive_login" in agent.tool_names
+
+
+def test_notion_mcp_oauth_tool_off_by_default() -> None:
+    agent = build_neuuf_coordinator(_scope(), include_coding_tools=False)
+    assert "notion_mcp_oauth_interactive_login" not in agent.tool_names

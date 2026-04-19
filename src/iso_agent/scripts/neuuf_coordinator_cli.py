@@ -11,6 +11,9 @@ from strands.handlers.callback_handler import PrintingCallbackHandler
 from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l2_user import UserScope
 from iso_agent.l3_runtime.agents import create_neuuf_coordinator_agent
+from iso_agent.l3_runtime.integrations.notion_mcp import (
+    consume_coordinator_reload_after_notion_mcp_oauth,
+)
 
 
 def _format_agent_runtime_error(exc: Exception) -> str:
@@ -104,7 +107,11 @@ def main() -> None:
     ctx = inbound_dm(user_id="local-dev", space="dm", thread="neuuf-cli")
     scope = UserScope.from_context(ctx)
     try:
-        agent = create_neuuf_coordinator_agent(scope, include_coding_tools=not args.no_coding_tools)
+        agent = create_neuuf_coordinator_agent(
+            scope,
+            include_coding_tools=not args.no_coding_tools,
+            include_notion_mcp_oauth_tool=(args.query is None and sys.stdin.isatty()),
+        )
     except Exception as exc:
         print(
             f"Failed to initialize the coordinator agent: {exc}. "
@@ -122,6 +129,11 @@ def main() -> None:
         return
 
     print("Neuuf ISO coordinator — type 'exit', 'quit', or Ctrl+D to stop.")
+    print(
+        "Notion MCP: transport defaults to hybrid. With mcp_oauth.json you get "
+        "notion_mcp_* tools; else ask the agent to call notion_mcp_oauth_interactive_login "
+        "once, then ask for teamspaces."
+    )
     print(
         "Tip: STRANDS_TOOL_CONSOLE_MODE is enabled for clearer tool traces "
         "(use --plain-console to disable). BYPASS_TOOL_CONSENT defaults to true so coding tools "
@@ -142,6 +154,24 @@ def main() -> None:
             print()
         except Exception as exc:  # noqa: BLE001 — surface any model/tool error in the REPL
             print(f"error: {_format_agent_runtime_error(exc)}", file=sys.stderr)
+        else:
+            if consume_coordinator_reload_after_notion_mcp_oauth():
+                try:
+                    agent = create_neuuf_coordinator_agent(
+                        scope,
+                        include_coding_tools=not args.no_coding_tools,
+                        include_notion_mcp_oauth_tool=True,
+                    )
+                except Exception as exc:
+                    print(
+                        f"Failed to reload coordinator after Notion MCP OAuth: {exc}",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        "(Coordinator reloaded — Notion MCP tools are now available. "
+                        "Ask again for teamspaces.)"
+                    )
 
 
 if __name__ == "__main__":

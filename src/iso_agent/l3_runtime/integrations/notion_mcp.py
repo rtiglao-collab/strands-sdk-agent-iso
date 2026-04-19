@@ -34,6 +34,8 @@ _SKEW_SECONDS = 120.0
 _clients: dict[str, MCPClient] = {}
 _client_lock = threading.Lock()
 _last_access_token: dict[str, str] = {}
+_reload_lock = threading.Lock()
+_pending_coordinator_reload_after_oauth = False
 
 
 def notion_mcp_oauth_store_path(scope: UserScope) -> Path:
@@ -150,6 +152,23 @@ def _shutdown_all_notion_mcp_clients() -> None:
     keys = list(_clients.keys())
     for k in keys:
         _shutdown_client(k)
+
+
+def request_coordinator_reload_after_notion_mcp_oauth() -> None:
+    """Signal the CLI host to rebuild the coordinator so new MCP tools load."""
+    global _pending_coordinator_reload_after_oauth
+    with _reload_lock:
+        _pending_coordinator_reload_after_oauth = True
+
+
+def consume_coordinator_reload_after_notion_mcp_oauth() -> bool:
+    """Return True once if the host should rebuild the :class:`~strands.agent.agent.Agent`."""
+    global _pending_coordinator_reload_after_oauth
+    with _reload_lock:
+        if not _pending_coordinator_reload_after_oauth:
+            return False
+        _pending_coordinator_reload_after_oauth = False
+        return True
 
 
 def reset_notion_mcp_for_tests() -> None:
@@ -344,3 +363,39 @@ def notion_mcp_primary_hides_rest_discovery(scope: UserScope) -> bool:
     """When ``mcp_primary`` and OAuth file exists, REST ``notion_discover_*`` is suppressed."""
     s = get_settings()
     return s.notion_transport == "mcp_primary" and notion_mcp_oauth_configured(scope)
+
+
+def build_notion_mcp_oauth_tool(scope: UserScope) -> list[Any]:
+    """Single coordinator tool to run browser OAuth without a separate CLI (local REPL)."""
+    if not _mcp_should_register():
+        return []
+    from strands.tools.decorator import tool
+
+    @tool(
+        name="notion_mcp_oauth_interactive_login",
+        description=(
+            "Connect Notion hosted MCP: browser OAuth, saves tokens under memory/.../notion/. "
+            "After success the REPL reloads the coordinator so notion_mcp_* tools load. "
+            "Use when the user wants teamspaces/workspaces and OAuth is not set up yet."
+        ),
+    )
+    def notion_mcp_oauth_interactive_login() -> str:
+        try:
+            run_notion_mcp_interactive_login(scope, open_browser=True)
+        except SystemExit as exc:
+            return f"error=oauth_failed detail={exc!s}"
+        except Exception as exc:
+            logger.warning(
+                "notion_mcp=oauth_tool_failed exc_type=<%s>",
+                type(exc).__name__,
+                exc_info=exc,
+            )
+            return f"error=oauth_failed exc_type={type(exc).__name__}"
+        request_coordinator_reload_after_notion_mcp_oauth()
+        return (
+            "ok=notion_mcp_oauth_saved | OAuth finished. The CLI reloads the coordinator after "
+            "this turn; then use notion_mcp_* tools for teamspace/workspace structure."
+        )
+
+    return [notion_mcp_oauth_interactive_login]
+

@@ -197,7 +197,7 @@ iso-neuuf-coordinator --query "Use notion_create_qms_draft with parent_page_id=<
 
 ### 3.5 Notion hosted MCP (OAuth, optional)
 
-Hosted Notion MCP uses **user OAuth** (PKCE + dynamic client registration), not `NOTION_TOKEN`. It is wired into the same coordinator when **`ISO_AGENT_NOTION_TRANSPORT`** is **`hybrid`** or **`mcp_primary`** and **`memory/users/<user_key>/notion/mcp_oauth.json`** exists.
+Hosted Notion MCP uses **user OAuth** (PKCE + dynamic client registration), not `NOTION_TOKEN`. It merges into the coordinator when transport is **`hybrid`** (default) or **`mcp_primary`** and **`memory/users/<user_key>/notion/mcp_oauth.json`** exists. From **`iso-neuuf-coordinator`** REPL you can also ask the agent to call **`notion_mcp_oauth_interactive_login`** once instead of a separate login command.
 
 1. Set transport to `hybrid` (recommended first) or `mcp_primary`.
 2. Run **`iso-notion-mcp-login`** (or **`iso-neuuf-coordinator --notion-mcp-login`**) and finish the browser flow.
