@@ -9,14 +9,14 @@ Use this tree for **credential files that must never be committed**. Only markdo
 1. In [Google Cloud Console](https://console.cloud.google.com/), create a **service account** key (**JSON**).
 2. Save the file inside this repo as:
 
-   `secrets/google/<anything>.json`  
+   `secrets/google/<anything>.json`
    Example: `secrets/google/neuuf-drive-dev.json`
 
 3. Point the standard Google client env var at that path (from repo root, `$PWD` is fine):
 
    ```bash
    export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/<YOUR_KEY>.json"
-   export ISO_AGENT_DRIVE_ENABLED=true
+   # ISO_AGENT_DRIVE_ENABLED defaults true; export false to disable Drive tools.
    export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS="<comma_separated_folder_ids>"
    ```
 

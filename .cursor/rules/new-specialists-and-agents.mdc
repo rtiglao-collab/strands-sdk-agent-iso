@@ -1,0 +1,27 @@
+---
+description: Required practices when adding Neuuf specialists, coordinator tools, or new agent surfaces
+alwaysApply: true
+---
+
+# New specialists and agents (repo contract)
+
+Whenever you add a **Neuuf specialist**, **coordinator-facing tool**, or **new agent entrypoint**, follow the same patterns as existing code—no one-off stacks.
+
+## Specialist (agent-as-tool on the coordinator)
+
+1. **Module:** `src/iso_agent/l3_runtime/team/<name>_tool.py` with `build_<name>_tools(scope: UserScope) -> list[Any]` returning `@tool` wrappers (see `researcher_tool.py`, `specialist_base.py`).
+2. **Wire-up:** Register in `src/iso_agent/l3_runtime/team/subagents.py` inside `build_specialist_tools` (preserve import order / style of siblings).
+3. **Prompt:** Add `knowledge/agents/<role_slug>.md` and load it via `build_inner_specialist(..., "<role_slug>", ...)` / `load_role_prompt`—no giant system strings in Python.
+4. **Model:** Inner agents use **`get_default_model()`** only (**Bedrock**). Do not introduce `AnthropicModel` or direct vendor API keys (`llm-bedrock-only.mdc`).
+5. **Scope:** Pass **`UserScope`** into builders when tools write under `memory/users/<user_key>/` or need partition keys.
+6. **Tests:** Add focused tests under `tests/` mirroring the module you touch (mock LLM / MCP as siblings do); run `pytest` for the paths you changed.
+7. **Docs:** Update `docs/ARCHITECTURE.md` (where to add code) and **`AGENTS.md`** “truthful docs” table if behavior is user-visible. Run `python scripts/sync_repo_docs.py` when scripts, packages, rules, or top-level layout change (`repo-maintenance.mdc`).
+
+## Coordinator-only tools (not a full specialist)
+
+- Put implementations in `src/iso_agent/l3_runtime/tools/` (or `l2_user/` for persistence helpers), merge in `team/coordinator.py`, keep prompts or constants in `knowledge/` or `config.py` as appropriate.
+
+## Cross-cutting
+
+- **Coding / REPL:** If the change affects how coding tools behave, update `knowledge/agents/coding_precursor.md` and keep `coding-precursor-alignment.mdc` consistent.
+- **Secrets:** Never commit tokens; use env patterns in `docs/ENV_AND_SECRETS_INVENTORY.md` when adding new variables.

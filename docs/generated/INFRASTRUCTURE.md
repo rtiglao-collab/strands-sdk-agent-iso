@@ -44,12 +44,17 @@ iso_agent/
 │   ├── notion_page_index_store.py
 │   └── user_scope.py
 ├── l3_runtime
+│   ├── cli
+│   │   ├── __init__.py
+│   │   └── rich_agent_callback.py
 │   ├── integrations
 │   │   ├── __init__.py
 │   │   ├── drive_client.py
+│   │   ├── google_workspace_mcp.py
 │   │   ├── notion_client.py
 │   │   ├── notion_mcp.py
 │   │   ├── notion_mcp_oauth.py
+│   │   ├── notion_mcp_runtime.py
 │   │   └── perplexity.py
 │   ├── team
 │   │   ├── __init__.py
@@ -91,11 +96,13 @@ iso_agent/
 
 Key application, docs, guardrails, and references (from `git ls-files` when available):
 
+- `.cursor/rules/coding-precursor-alignment.mdc`
 - `.cursor/rules/core-scope.mdc`
 - `.cursor/rules/discovery-first.mdc`
 - `.cursor/rules/git-explicit-push.mdc`
 - `.cursor/rules/iso9001-product.mdc`
 - `.cursor/rules/llm-bedrock-only.mdc`
+- `.cursor/rules/new-specialists-and-agents.mdc`
 - `.cursor/rules/python-strands.mdc`
 - `.cursor/rules/repo-maintenance.mdc`
 - `.cursor/rules/security-first.mdc`
@@ -113,12 +120,13 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `docs/INTEGRATIONS_WALKTHROUGH.md`
 - `docs/MANUAL_AGENT_QA_CHECKLIST.md`
 - `docs/NEUUF_ISO_PHASE_PLAN.md`
+- `docs/NOTION_MCP.md`
 - `docs/generated/INFRASTRUCTURE.md`
 - `docs/templates/gap_handoff_chat.md`
 - `docs/templates/gap_handoff_notion.md`
 - `knowledge/README.md`
+- `knowledge/agents/coding_precursor.md`
 - `knowledge/agents/comms_coordinator.md`
-- `knowledge/agents/dev_builder.md`
 - `knowledge/agents/gap_analyst.md`
 - `knowledge/agents/google_chat_room_suffix.md`
 - `knowledge/agents/governance_evidence.md`
@@ -152,13 +160,20 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/l2_user/gap_store.py`
 - `src/iso_agent/l2_user/memory_layout.py`
 - `src/iso_agent/l2_user/notion_allowlist_store.py`
+- `src/iso_agent/l2_user/notion_page_index_store.py`
 - `src/iso_agent/l2_user/user_scope.py`
 - `src/iso_agent/l3_runtime/__init__.py`
 - `src/iso_agent/l3_runtime/agents.py`
+- `src/iso_agent/l3_runtime/cli/__init__.py`
+- `src/iso_agent/l3_runtime/cli/rich_agent_callback.py`
 - `src/iso_agent/l3_runtime/default_model.py`
 - `src/iso_agent/l3_runtime/integrations/__init__.py`
 - `src/iso_agent/l3_runtime/integrations/drive_client.py`
+- `src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py`
 - `src/iso_agent/l3_runtime/integrations/notion_client.py`
+- `src/iso_agent/l3_runtime/integrations/notion_mcp.py`
+- `src/iso_agent/l3_runtime/integrations/notion_mcp_oauth.py`
+- `src/iso_agent/l3_runtime/integrations/notion_mcp_runtime.py`
 - `src/iso_agent/l3_runtime/integrations/perplexity.py`
 - `src/iso_agent/l3_runtime/prompts.py`
 - `src/iso_agent/l3_runtime/specialists.py`
@@ -184,6 +199,12 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/scripts/demo_calculator.py`
 - `src/iso_agent/scripts/iso_chat_webhook.py`
 - `src/iso_agent/scripts/neuuf_coordinator_cli.py`
+- `src/iso_agent/scripts/notion_mcp_login.py`
+- `tests/__init__.py`
+- `tests/manual_notion_page_inspect.py`
+- `tests/notion_mcp_fakes.py`
+- `tests/test_coding_restraints.py`
+- `tests/test_coordinator_coding_precursor.py`
 - `tests/test_coordinator_coding_tools.py`
 - `tests/test_default_model.py`
 - `tests/test_drive_tools.py`
@@ -191,11 +212,16 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `tests/test_gap_tools.py`
 - `tests/test_google_chat_app.py`
 - `tests/test_google_chat_parse.py`
+- `tests/test_google_workspace_mcp.py`
 - `tests/test_memory_layout.py`
 - `tests/test_neuuf_coordinator_cli.py`
 - `tests/test_notion_allowlist_store.py`
+- `tests/test_notion_fetch_page_text.py`
+- `tests/test_notion_mcp.py`
+- `tests/test_notion_page_index_store.py`
 - `tests/test_notion_tools.py`
 - `tests/test_perplexity.py`
 - `tests/test_phase7_calendar_audit.py`
 - `tests/test_prompts_and_mode.py`
+- `tests/test_rich_agent_callback.py`
 - `tests/test_sync_repo_docs.py`

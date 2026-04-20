@@ -23,9 +23,9 @@ Pre-commit runs `python scripts/sync_repo_docs.py --check` and **blocks commits*
 
 | File | You update when… |
 |------|------------------|
-| `docs/ARCHITECTURE.md` | Layering concepts or where new concerns live |
+| `docs/ARCHITECTURE.md` | Layering concepts or where new concerns live; use the **new specialist checklist** when adding agents-as-tools |
 | `docs/CAPABILITIES.template.md` → copy to `CAPABILITIES.md` | Product capabilities change |
-| `.cursor/rules/*.mdc` | AI guardrails or conventions change |
+| `.cursor/rules/*.mdc` | AI guardrails or conventions change; **adding specialists** follows `new-specialists-and-agents.mdc` (edit that file if the contract changes) |
 | `AGENTS.md` | High-level entry points for assistants change |
 
 Keep the generated file and hand-maintained architecture in sync: if the tree changes, regenerate first, then adjust `ARCHITECTURE.md` only if the mental model changed.

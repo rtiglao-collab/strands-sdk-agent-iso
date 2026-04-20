@@ -6,11 +6,15 @@ import argparse
 import os
 import sys
 
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 from strands.handlers.callback_handler import PrintingCallbackHandler
 
 from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l2_user import UserScope
 from iso_agent.l3_runtime.agents import create_neuuf_coordinator_agent
+from iso_agent.l3_runtime.cli import RichAgentConsoleCallback
 from iso_agent.l3_runtime.integrations.notion_mcp import (
     consume_coordinator_reload_after_notion_mcp_oauth,
 )
@@ -34,9 +38,14 @@ def _print_agent_result(agent: object, result: object) -> None:
     Strands :class:`~strands.agent.agent.Agent` defaults to :class:`PrintingCallbackHandler`,
     which prints assistant tokens as they arrive. The CLI used to also ``print(str(result))``,
     which duplicated the full reply for REPL and ``--query`` runs.
+
+    :class:`~iso_agent.l3_runtime.cli.rich_agent_callback.RichAgentConsoleCallback` leaves the
+    streamed Markdown on screen when the turn ends; skip printing ``str(result)`` for it too.
     """
     ch = getattr(agent, "callback_handler", None)
     if isinstance(ch, PrintingCallbackHandler):
+        return
+    if getattr(ch, "_rich_agent_console", False):
         return
     print(str(result))
 
@@ -57,7 +66,10 @@ def main() -> None:
     parser.add_argument(
         "--plain-console",
         action="store_true",
-        help="Do not set STRANDS_TOOL_CONSOLE_MODE (disable richer tool UI in the terminal).",
+        help=(
+            "Plain terminal: do not set STRANDS_TOOL_CONSOLE_MODE, and do not use Rich for "
+            "assistant/tool streaming (default is Rich when stdout is a TTY)."
+        ),
     )
     parser.add_argument(
         "--no-coding-tools",
@@ -100,17 +112,20 @@ def main() -> None:
         # Without this, strands_tools block each repl/editor/shell with a tty prompt
         os.environ.setdefault("BYPASS_TOOL_CONSENT", "true")
 
+    use_rich = not args.plain_console and sys.stdout.isatty()
     if not args.plain_console:
         # Show rich UI for tools in CLI
         os.environ["STRANDS_TOOL_CONSOLE_MODE"] = "enabled"
 
     ctx = inbound_dm(user_id="local-dev", space="dm", thread="neuuf-cli")
     scope = UserScope.from_context(ctx)
+    rich_cb: RichAgentConsoleCallback | None = RichAgentConsoleCallback() if use_rich else None
     try:
         agent = create_neuuf_coordinator_agent(
             scope,
             include_coding_tools=not args.no_coding_tools,
             include_notion_mcp_oauth_tool=(args.query is None and sys.stdin.isatty()),
+            callback_handler=rich_cb,
         )
     except Exception as exc:
         print(
@@ -128,17 +143,33 @@ def main() -> None:
             raise SystemExit(1) from None
         return
 
-    print("Neuuf ISO coordinator — type 'exit', 'quit', or Ctrl+D to stop.")
-    print(
-        "Notion MCP: transport defaults to hybrid. With mcp_oauth.json you get "
-        "notion_mcp_* tools; else ask the agent to call notion_mcp_oauth_interactive_login "
-        "once, then ask for teamspaces."
-    )
-    print(
-        "Tip: STRANDS_TOOL_CONSOLE_MODE is enabled for clearer tool traces "
-        "(use --plain-console to disable). BYPASS_TOOL_CONSENT defaults to true so coding tools "
-        "run without per-tool [y/*] prompts (use --require-tool-consent for confirmations)."
-    )
+    if use_rich:
+        _welcome = Console(highlight=False, soft_wrap=True)
+        _welcome.print(
+            Panel.fit(
+                "[bold]Neuuf ISO coordinator[/] — type [cyan]exit[/], [cyan]quit[/], or Ctrl+D.\n\n"
+                "Notion: [dim]hybrid transport; notion_* via MCP after OAuth; raw notion_mcp_* "
+                "for team lists; notion_mcp_oauth_interactive_login if needed.[/]\n\n"
+                "[dim]STRANDS_TOOL_CONSOLE_MODE + Rich markdown streaming are on "
+                "([cyan]--plain-console[/] to disable). "
+                "BYPASS_TOOL_CONSENT defaults true; [cyan]--require-tool-consent[/] for [y/*].[/]",
+                title="iso-neuuf-coordinator",
+                border_style="blue",
+            )
+        )
+    else:
+        print("Neuuf ISO coordinator — type 'exit', 'quit', or Ctrl+D to stop.")
+        print(
+            "Notion: transport defaults to hybrid. After OAuth (mcp_oauth.json), **notion_*** QMS "
+            "tools use hosted MCP, and extra **notion_mcp_*** tools may appear for teamspace-style "
+            "queries; else call notion_mcp_oauth_interactive_login once."
+        )
+        print(
+            "Tip: STRANDS_TOOL_CONSOLE_MODE is enabled for clearer tool traces "
+            "(use --plain-console to disable). BYPASS_TOOL_CONSENT defaults to true so coding "
+            "tools run without per-tool [y/*] prompts (use --require-tool-consent for "
+            "confirmations)."
+        )
     while True:
         try:
             line = input("You: ").strip()
@@ -161,6 +192,7 @@ def main() -> None:
                         scope,
                         include_coding_tools=not args.no_coding_tools,
                         include_notion_mcp_oauth_tool=True,
+                        callback_handler=rich_cb,
                     )
                 except Exception as exc:
                     print(
@@ -168,10 +200,18 @@ def main() -> None:
                         file=sys.stderr,
                     )
                 else:
-                    print(
-                        "(Coordinator reloaded — Notion MCP tools are now available. "
-                        "Ask again for teamspaces.)"
-                    )
+                    if use_rich:
+                        Console(highlight=False, soft_wrap=True).print(
+                            Markdown(
+                                "**Coordinator reloaded** — Notion MCP session is ready; "
+                                "**notion_*** tools are active."
+                            )
+                        )
+                    else:
+                        print(
+                            "(Coordinator reloaded — Notion MCP session is ready; **notion_*** "
+                            "tools are active.)"
+                        )
 
 
 if __name__ == "__main__":

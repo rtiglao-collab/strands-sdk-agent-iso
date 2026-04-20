@@ -2,14 +2,14 @@
 
 Use this list when moving from **local exports** and **`secrets/`** files to **cloud** secret managers, CI variables, or mounted files. Names match what the code reads today (`src/iso_agent/config.py`, tools, adapters).
 
-**Convention:** `ISO_AGENT_*` variables are loaded by `Settings` (see `config.py`). A few vendors use **standard names** without that prefix (`GOOGLE_APPLICATION_CREDENTIALS`, `NOTION_TOKEN`, `PERPLEXITY_API_KEY`).
+**Convention:** `ISO_AGENT_*` variables are loaded by `Settings` (see `config.py`). A few vendors use **standard names** without that prefix (`GOOGLE_APPLICATION_CREDENTIALS`, `NOTION_TOKEN` for manual REST only, `PERPLEXITY_API_KEY`).
 
 ## Secret values (treat as credentials in prod)
 
 | Name | Type | Used by | Local pattern | Cloud migration |
 |------|------|---------|---------------|-----------------|
 | `GOOGLE_APPLICATION_CREDENTIALS` | Filesystem path to JSON | Drive client (`drive_client.py`) | `secrets/google/*.json` (gitignored) | Mount file or inject JSON into a volume; set env to path |
-| `NOTION_TOKEN` | String | Notion tools | export / secret manager | Parameter store / vault secret |
+| `NOTION_TOKEN` | String | Ad-hoc REST only (`tests/manual_notion_page_inspect.py`); **not** coordinator `notion_*` | export / secret manager | Optional; omit if you use MCP only |
 | `PERPLEXITY_API_KEY` | String | Perplexity MCP (`perplexity.py`) | export | Secret manager |
 | `ISO_AGENT_CHAT_WEBHOOK_SECRET` | String | Google Chat webhook (`google_chat_app.py`) | export | Secret manager; rotate with Chat app config |
 
@@ -29,13 +29,17 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 | `ISO_AGENT_BEDROCK_REGION_NAME` | Bedrock region override |
 | `ISO_AGENT_BEDROCK_MAX_TOKENS` | Optional max tokens |
 | `ISO_AGENT_PERPLEXITY_TRANSPORT` | `disabled` (default) \| `docker` — researcher MCP |
-| `ISO_AGENT_DRIVE_ENABLED` | `true` / `false` — enable Drive tools |
+| `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT` | `disabled` (default) \| `stdio` — coordinator **`google_workspace_mcp_*`** tools via **`npx google-workspace-mcp serve`** |
+| `ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY` | `true` (default) — append **`--read-only`** to **`serve`**; set **`false`** to allow MCP write tools |
+| `ISO_AGENT_DRIVE_ENABLED` | Defaults **`true`**; set **`false`** to disable Drive tools for this process |
 | `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` | Comma-separated **folder** IDs (allowlist). **Not** `ISO_AGENT_DRIVE_FOLDER_ID`. |
 | `ISO_AGENT_DRIVE_ALLOWED_FILE_IDS` | Optional comma-separated **file** IDs |
 | `ISO_AGENT_DRIVE_MAX_LIST` | Max list size (default 25, cap 100) |
-| `ISO_AGENT_NOTION_ENABLED` | `true` / `false` |
+| `ISO_AGENT_NOTION_ENABLED` | `true` (default) / `false` — opt out of Notion tools |
+| `ISO_AGENT_NOTION_TRANSPORT` | `hybrid` (default) \| `mcp_primary` \| `rest_only` — `rest_only` disables coordinator Notion tools; MCP uses OAuth (`docs/NOTION_MCP.md`) |
 | `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` | Comma-separated Notion **page** UUIDs (draft parents for ``notion_create_qms_draft``); merged with per-user ``memory/users/<user_key>/notion/allowlist.json`` |
 | `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` | Comma-separated Notion **page** UUIDs readable via ``notion_read_page``; merged with the same persisted file |
+| `ISO_AGENT_NOTION_DISCOVERY_ENABLED` | `true` (default) / `false` — hide ``notion_discover_connected_pages`` only |
 | `ISO_AGENT_CHAT_WEBHOOK_SECRET` | Shared secret header value for Chat ingress |
 | `ISO_AGENT_CHAT_ALLOW_INSECURE` | `true` only for local dev without secret |
 | `ISO_AGENT_CHAT_DEDUPE_TTL_SECONDS` | Webhook dedupe window (seconds) |
@@ -47,6 +51,7 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 | `PORT` | `iso-chat-webhook` bind port (default 8080) |
 | `UVICORN_LOG_LEVEL` | Uvicorn log level for webhook |
 | `STRANDS_TOOL_CONSOLE_MODE` | Set by `iso-neuuf-coordinator` for richer CLI tool UI |
+| `BYPASS_TOOL_CONSENT` | When `true`, `strands_tools` **`python_repl`**, **`editor`**, **`shell`** skip interactive `[y/*]` confirmation (Strands upstream). `iso-neuuf-coordinator` **setdefaults** this to `true` unless **`--require-tool-consent`**; not set by Google Chat ingress |
 
 ## Local files (do not commit)
 
@@ -54,6 +59,7 @@ Use this list when moving from **local exports** and **`secrets/`** files to **c
 |------|---------|
 | `secrets/**/*.json` | Google (and similar) JSON keys — **gitignored** |
 | `memory/users/**` | Per-user runtime state — gitignored except `.gitkeep` |
+| `mcp_oauth.json` (repo root or cwd) | Notion MCP OAuth tokens — **gitignored**; see `docs/NOTION_MCP.md` |
 | `.env` (optional) | pydantic-settings reads it if present — **gitignored** at repo root |
 
 ## Safe template in git
@@ -68,7 +74,7 @@ From the repository root, after placing your key under `secrets/google/`:
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/<YOUR_SERVICE_ACCOUNT>.json"
-export ISO_AGENT_DRIVE_ENABLED=true
+# ISO_AGENT_DRIVE_ENABLED defaults true; export ISO_AGENT_DRIVE_ENABLED=false to disable.
 export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS="0AMWuWf-m9SwNUk9PVA"
 ```
 

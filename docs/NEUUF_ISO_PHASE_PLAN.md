@@ -66,7 +66,7 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 - Optional extra **`pip install iso-agent[drive]`** (`google-api-python-client`, `google-auth`).
 - `src/iso_agent/l3_runtime/integrations/drive_client.py` — service account build, list children, metadata, export.
 - `src/iso_agent/l3_runtime/tools/drive_tools.py` — `drive_list_folder`, `drive_read_document` tools merged in **`team/coordinator.py`**.
-- Settings: `drive_enabled`, `drive_allowed_folder_ids`, `drive_allowed_file_ids`, `drive_max_list`; credentials via **`GOOGLE_APPLICATION_CREDENTIALS`** (standard path to service account JSON).
+- Settings: `drive_enabled` (defaults **true**; set **`ISO_AGENT_DRIVE_ENABLED=false`** to opt out), `drive_allowed_folder_ids`, `drive_allowed_file_ids`, `drive_max_list`; credentials via **`GOOGLE_APPLICATION_CREDENTIALS`** (standard path to service account JSON).
 - **Allowlists required** before tools attach; no cross-folder reads without an allowlisted parent or file id.
 
 **Exit criteria:** Tests mock the Drive service; docs and capability template updated; sanitized errors on failures.
@@ -77,11 +77,12 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 
 **Implemented:**
 
-- Optional extra **`pip install iso-agent[notion]`** (`notion-client`).
-- `src/iso_agent/l3_runtime/integrations/notion_client.py` — UUID validation, `create_child_page`, `fetch_page_text`.
+- Optional extra **`pip install iso-agent[notion]`** (`notion-client` for UUID helpers only; coordinator **`notion_*`** uses **hosted Notion MCP**).
+- `src/iso_agent/l3_runtime/integrations/notion_mcp.py` + **`notion_mcp_runtime.py`** — OAuth-backed MCP client and tool calls (`notion-search`, `notion-fetch`, `notion-create-pages`).
+- `src/iso_agent/l3_runtime/integrations/notion_client.py` — UUID validation and legacy REST helpers (manual scripts only).
 - `src/iso_agent/l3_runtime/tools/notion_tools.py` — `notion_create_qms_draft`, `notion_read_page`, discovery, and **`notion_allowlist_*`** (persisted allowlist under **`memory/users/<user_key>/notion/`** merged with env on each call).
-- Token: **`NOTION_TOKEN`** (internal integration secret; not prefixed with `ISO_AGENT_` to match Notion docs). Never logged.
-- Settings: `notion_enabled`, `notion_allowed_parent_ids`, `notion_allowed_page_ids`; merge with disk in **`l2_user/notion_allowlist_store.py`** (used from **`notion_tools.py`**).
+- Auth: **`mcp_oauth.json`** per `docs/NOTION_MCP.md` (never logged). **`NOTION_TOKEN`** is only for ad-hoc REST debugging (`tests/manual_notion_page_inspect.py`), not coordinator tools.
+- Settings: `notion_enabled`, `notion_transport`, `notion_allowed_parent_ids`, `notion_allowed_page_ids`; merge with disk in **`l2_user/notion_allowlist_store.py`** (used from **`notion_tools.py`**).
 - Draft titles prefixed with **`[DRAFT]`**; no “publish” path in this phase.
 
 **Exit criteria:** Tests mock Notion calls; docs and capability template updated.

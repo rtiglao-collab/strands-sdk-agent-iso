@@ -14,15 +14,15 @@ def _scope() -> UserScope:
     return UserScope.from_context(inbound_dm(user_id="u", space="dm", thread="t"))
 
 
-def test_build_drive_tools_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Must not inherit ``ISO_AGENT_DRIVE_ENABLED`` from the developer shell."""
+def test_build_drive_tools_disabled_when_env_false(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``ISO_AGENT_DRIVE_ENABLED=false`` omits Drive tools even when creds exist."""
     monkeypatch.setenv("ISO_AGENT_DRIVE_ENABLED", "false")
     get_settings.cache_clear()
     assert drive_tools.build_drive_tools(_scope()) == []
 
 
 def test_build_drive_tools_empty_without_allowlist(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("ISO_AGENT_DRIVE_ENABLED", "true")
+    monkeypatch.delenv("ISO_AGENT_DRIVE_ENABLED", raising=False)
     key = tmp_path / "sa.json"
     key.write_text("{}", encoding="utf-8")
     monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", str(key))
@@ -32,7 +32,7 @@ def test_build_drive_tools_empty_without_allowlist(monkeypatch, tmp_path) -> Non
 
 
 def test_drive_list_folder_mocked(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("ISO_AGENT_DRIVE_ENABLED", "true")
+    monkeypatch.delenv("ISO_AGENT_DRIVE_ENABLED", raising=False)
     key = tmp_path / "sa.json"
     key.write_text("{}", encoding="utf-8")
     monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", str(key))
@@ -66,14 +66,16 @@ def test_drive_list_folder_mocked(monkeypatch, tmp_path) -> None:
         lambda _path: _FakeSvc(),
     )
     tools = drive_tools.build_drive_tools(_scope())
-    assert len(tools) == 2
+    assert len(tools) == 3
     out = str(tools[0]("folderABC"))
     assert "gap-analysis" in out
     assert "f1" in out
+    alias_out = str(tools[1]("folderABC"))
+    assert alias_out == out
 
 
 def test_drive_list_rejects_unknown_folder(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("ISO_AGENT_DRIVE_ENABLED", "true")
+    monkeypatch.delenv("ISO_AGENT_DRIVE_ENABLED", raising=False)
     key = tmp_path / "sa.json"
     key.write_text("{}", encoding="utf-8")
     monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", str(key))
@@ -86,5 +88,5 @@ def test_drive_list_rejects_unknown_folder(monkeypatch, tmp_path) -> None:
         lambda _path: object(),
     )
     tools = drive_tools.build_drive_tools(_scope())
-    out = str(tools[0]("notInListFolder"))
+    out = str(tools[0]("notInListFolder"))  # drive_list_folder
     assert "not_allowlisted" in out

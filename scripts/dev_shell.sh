@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
-# Open a shell with repo venv + .env loaded (AWS, NOTION_TOKEN, etc.).
+# Open a shell with repo venv + .env loaded (AWS, optional NOTION_TOKEN for manual REST scripts, etc.).
 # Usage: source scripts/dev_shell.sh   OR   ./scripts/dev_shell.sh
-set -euo pipefail
+#
+# When **sourced**, we must not run ``set -e`` / ``set -u`` here: those would stick to your
+# interactive shell and exit the terminal on the next failing command (e.g. a Python script
+# returning non-zero). Strict mode applies only when this file is **executed** (./…).
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  set -euo pipefail
+fi
+cd "$ROOT" || {
+  echo "dev_shell: cd failed" >&2
+  [[ "${BASH_SOURCE[0]}" == "${0}" ]] && exit 1 || return 1
+}
 
 if [[ -f "${ROOT}/.venv/bin/activate" ]]; then
   # shellcheck source=/dev/null

@@ -96,27 +96,34 @@ def _drive_gap_doc() -> tuple[str, bool]:
 
 
 def _notion_discovery() -> tuple[str, bool]:
-    import os
-
     from iso_agent.config import get_settings
-    from iso_agent.l3_runtime.integrations import notion_client
+    from iso_agent.l1_router.context import inbound_dm
+    from iso_agent.l2_user.user_scope import UserScope
+    from iso_agent.l3_runtime.integrations import notion_client, notion_mcp
+    from iso_agent.l3_runtime.integrations.notion_mcp_runtime import NotionMcpRuntime
 
     get_settings.cache_clear()
     s = get_settings()
     if not s.notion_enabled:
-        return "notion skipped | ISO_AGENT_NOTION_ENABLED is false", True
-    token = os.environ.get("NOTION_TOKEN", "").strip()
-    if not token:
-        return "notion fail | NOTION_TOKEN unset", False
+        return "notion skipped | ISO_AGENT_NOTION_ENABLED=false (opt-out)", True
+    if s.notion_transport == "rest_only":
+        return "notion skipped | ISO_AGENT_NOTION_TRANSPORT=rest_only", True
     if not s.notion_discovery_enabled:
         return (
-            "notion discovery skipped | set ISO_AGENT_NOTION_DISCOVERY_ENABLED=true "
-            "for read-only workspace listing",
+            "notion discovery skipped | ISO_AGENT_NOTION_DISCOVERY_ENABLED=false (opt-out); "
+            "defaults on when unset",
+            True,
+        )
+    scope = UserScope.from_context(inbound_dm(user_id="smoke", space="dm", thread="smoke"))
+    mcp = notion_mcp.ensure_notion_mcp_client(scope)
+    if mcp is None:
+        return (
+            "notion skipped | no Notion MCP OAuth for smoke scope "
+            "(memory/users/.../notion/mcp_oauth.json — run iso-notion-mcp-login)",
             True,
         )
     try:
-        client = notion_client.build_notion_client(token)
-        hits = notion_client.search_connected_pages(client, query="", page_size=15)
+        hits = NotionMcpRuntime(mcp).search_pages(query="", page_size=15)
     except Exception as exc:
         return f"notion discover fail | exc_type={type(exc).__name__}", False
     lines: list[str] = []
@@ -126,7 +133,7 @@ def _notion_discovery() -> tuple[str, bool]:
         parent = page.get("parent", {})
         lines.append(f"  - {pid} | {title!r} | parent={parent}")
     block = "\n".join(lines) if lines else "  (no pages returned)"
-    return f"notion discover connected pages (n={len(hits)}):\n{block}", True
+    return f"notion discover via MCP (n={len(hits)}):\n{block}", True
 
 
 def _in_repo_gap_prompt() -> str:

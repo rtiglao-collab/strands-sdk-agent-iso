@@ -8,10 +8,14 @@ build/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
+tests/.cache/
+repl_state/
 .venv/
 venv/
 .env
 .env.local
+# Kiro / IDE MCP — copy mcp.json.example to mcp.json locally (paths are machine-specific)
+.kiro/settings/mcp.json
 # Local credential files (e.g. Google service account JSON) — never commit
 secrets/**/*.json
 memory/users/**

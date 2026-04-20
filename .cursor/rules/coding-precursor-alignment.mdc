@@ -1,0 +1,13 @@
+---
+description: Align coding edits with iso-agent coordinator invariants (same as runtime coding_precursor)
+alwaysApply: true
+---
+
+# Coding alignment (Cursor + iso-agent)
+
+When you edit or generate code in this repo, mirror the runtime block **`knowledge/agents/coding_precursor.md`** (also appended to the Neuuf coordinator when coding tools are enabled):
+
+- **Layers:** L1 → L2 `memory/users/<user_key>/` → L3 `src/iso_agent/`. No product state under **`~/`**.
+- **Notion / Drive / gaps:** Prefer existing tools and persisted paths under **`memory/`**; do not reinvent discovery or allowlists in throwaway scripts.
+- **LLM:** Bedrock-only application code path—see **`llm-bedrock-only.mdc`**.
+- **Scope:** Smallest reasonable diff; follow **`AGENTS.md`** and **`docs/ARCHITECTURE.md`**.

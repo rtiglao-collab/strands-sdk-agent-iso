@@ -30,6 +30,10 @@ logger = logging.getLogger(__name__)
 
 _OAUTH_FILENAME = "mcp_oauth.json"
 _SKEW_SECONDS = 120.0
+# If the authorization server omits ``expires_in``, assume this TTL so we do not call
+# ``refresh_token`` on every ``ensure_notion_mcp_client`` (which can fail intermittently
+# and previously dropped all Notion tools by returning ``None``).
+_ASSUMED_ACCESS_TOKEN_TTL_SECONDS = 3600.0
 
 _clients: dict[str, MCPClient] = {}
 _client_lock = threading.Lock()
@@ -98,7 +102,13 @@ def _refresh_store_sync(path: Path, store: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_fresh_oauth_store(scope: UserScope) -> dict[str, Any] | None:
-    """Load ``mcp_oauth.json`` and refresh the access token when near expiry."""
+    """Load ``mcp_oauth.json`` and refresh the access token when near expiry.
+
+    Refresh failures fall back to the last known ``access_token`` so a transient
+    network error does not remove Notion tools until the token is actually invalid
+    (MCP calls may fail until refresh succeeds). Stores without ``expires_at`` get
+    a synthetic value so we do not invoke ``refresh_token`` on every client startup.
+    """
     path = notion_mcp_oauth_store_path(scope)
     if not path.is_file():
         return None
@@ -111,22 +121,33 @@ def ensure_fresh_oauth_store(scope: UserScope) -> dict[str, Any] | None:
             exc_info=exc,
         )
         return None
-    exp = store.get("expires_at")
     now = time.time()
-    needs = False
+    exp = store.get("expires_at")
     if not isinstance(exp, (int, float)):
-        needs = True
-    elif float(exp) - _SKEW_SECONDS <= now:
-        needs = True
+        try:
+            store["expires_at"] = now + _ASSUMED_ACCESS_TOKEN_TTL_SECONDS
+            _save_store(path, store)
+        except OSError as exc:
+            logger.warning(
+                "notion_mcp=expires_bootstrap_write_failed exc_type=<%s>",
+                type(exc).__name__,
+                exc_info=exc,
+            )
+        exp = store.get("expires_at")
+
+    needs = isinstance(exp, (int, float)) and float(exp) - _SKEW_SECONDS <= now
     if needs:
         try:
             store = _refresh_store_sync(path, store)
         except Exception as exc:
             logger.warning(
-                "notion_mcp=refresh_failed exc_type=<%s> | re-run login",
+                "notion_mcp=refresh_failed exc_type=<%s> | using_stale_access_token",
                 type(exc).__name__,
                 exc_info=exc,
             )
+            access = store.get("access_token")
+            if isinstance(access, str) and access:
+                return store
             return None
     return store
 
@@ -201,8 +222,8 @@ def _transport_callable(access_token: str, mcp_url: str) -> Callable[[], Any]:
     return lambda: _cm()
 
 
-def get_notion_mcp_tools(scope: UserScope) -> list[Any] | None:
-    """Return Notion MCP tool objects for the coordinator, or ``None`` when disabled."""
+def ensure_notion_mcp_client(scope: UserScope) -> MCPClient | None:
+    """Return a started :class:`~strands.tools.mcp.MCPClient` for this user, or ``None``."""
     if not _mcp_should_register():
         return None
     store = ensure_fresh_oauth_store(scope)
@@ -237,8 +258,16 @@ def get_notion_mcp_tools(scope: UserScope) -> list[Any] | None:
                 _shutdown_client(user_key)
                 return None
             logger.info("notion_mcp=ready user_key=<%s> tool_count=<%d>", user_key, len(tools))
-            return list(tools)
-        return list(_clients[user_key].list_tools_sync())
+            return _clients[user_key]
+        return _clients[user_key]
+
+
+def get_notion_mcp_tools(scope: UserScope) -> list[Any] | None:
+    """Return raw Notion MCP tool adapters (optional); prefer ``ensure_notion_mcp_client``."""
+    client = ensure_notion_mcp_client(scope)
+    if client is None:
+        return None
+    return list(client.list_tools_sync())
 
 
 def run_notion_mcp_interactive_login(scope: UserScope, *, open_browser: bool = True) -> None:
@@ -359,12 +388,6 @@ def run_notion_mcp_interactive_login(scope: UserScope, *, open_browser: bool = T
     print(f"Saved Notion MCP OAuth tokens to {out_path} (do not commit this file).")
 
 
-def notion_mcp_primary_hides_rest_discovery(scope: UserScope) -> bool:
-    """When ``mcp_primary`` and OAuth file exists, REST ``notion_discover_*`` is suppressed."""
-    s = get_settings()
-    return s.notion_transport == "mcp_primary" and notion_mcp_oauth_configured(scope)
-
-
 def build_notion_mcp_oauth_tool(scope: UserScope) -> list[Any]:
     """Single coordinator tool to run browser OAuth without a separate CLI (local REPL)."""
     if not _mcp_should_register():
@@ -374,9 +397,10 @@ def build_notion_mcp_oauth_tool(scope: UserScope) -> list[Any]:
     @tool(
         name="notion_mcp_oauth_interactive_login",
         description=(
-            "Connect Notion hosted MCP: browser OAuth, saves tokens under memory/.../notion/. "
-            "After success the REPL reloads the coordinator so notion_mcp_* tools load. "
-            "Use when the user wants teamspaces/workspaces and OAuth is not set up yet."
+            "One-time (or rare) Notion hosted MCP browser OAuth; saves tokens under memory/.../notion/. "
+            "After success the REPL reloads the coordinator so **notion_*** QMS tools run. Tokens "
+            "refresh automatically; call this only for first setup, revoked access, or a new "
+            "Notion account/workspace."
         ),
     )
     def notion_mcp_oauth_interactive_login() -> str:
@@ -394,8 +418,7 @@ def build_notion_mcp_oauth_tool(scope: UserScope) -> list[Any]:
         request_coordinator_reload_after_notion_mcp_oauth()
         return (
             "ok=notion_mcp_oauth_saved | OAuth finished. The CLI reloads the coordinator after "
-            "this turn; then use notion_mcp_* tools for teamspace/workspace structure."
+            "this turn; then **notion_*** tools use hosted Notion MCP."
         )
 
     return [notion_mcp_oauth_interactive_login]
-

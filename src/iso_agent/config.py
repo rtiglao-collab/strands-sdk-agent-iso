@@ -35,8 +35,17 @@ class Settings(BaseSettings):
     #: ``disabled`` never opens Docker.
     perplexity_transport: Literal["docker", "disabled"] = "disabled"
 
-    #: Google Drive read-only tools on the coordinator (Phase 3).
-    drive_enabled: bool = False
+    #: ``stdio`` spawns ``npx -y google-workspace-mcp serve`` (OAuth via
+    #: ``npx google-workspace-mcp setup`` once; see integrations walkthrough).
+    #: ``disabled`` (default) does not start MCP.
+    google_workspace_mcp_transport: Literal["disabled", "stdio"] = "disabled"
+
+    #: When transport is ``stdio``, append ``--read-only`` to ``serve`` (recommended).
+    google_workspace_mcp_serve_read_only: bool = True
+
+    #: Google Drive read-only tools on the coordinator (Phase 3). Defaults ``true``; set
+    #: ``ISO_AGENT_DRIVE_ENABLED=false`` to omit Drive tools without changing allowlists.
+    drive_enabled: bool = True
 
     #: Comma-separated Drive folder IDs that may be listed or used as parent allowlist.
     drive_allowed_folder_ids: str = ""
@@ -48,7 +57,7 @@ class Settings(BaseSettings):
     drive_max_list: int = 25
 
     #: Notion QMS tools on the coordinator (Phase 4). Defaults ``true``; set
-    #: ``ISO_AGENT_NOTION_ENABLED=false`` to omit tools even when ``NOTION_TOKEN`` is set.
+    #: ``ISO_AGENT_NOTION_ENABLED=false`` to omit Notion tools even when MCP OAuth is configured.
     notion_enabled: bool = True
 
     #: Comma-separated Notion **page** UUIDs where **child drafts** may be created.
@@ -62,8 +71,9 @@ class Settings(BaseSettings):
     #: ``ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`` to hide that tool only.
     notion_discovery_enabled: bool = True
 
-    #: ``hybrid`` (default): merge hosted Notion MCP tools when ``mcp_oauth.json`` exists.
-    #: ``rest_only`` disables MCP; ``mcp_primary`` prefers MCP for discovery (see docs).
+    #: ``hybrid`` / ``mcp_primary`` (default ``hybrid``): start hosted Notion MCP when
+    #: ``mcp_oauth.json`` exists; ``notion_*`` tools call MCP under the hood.
+    #: ``rest_only`` disables Notion tools entirely (no OAuth client).
     notion_transport: Literal["rest_only", "hybrid", "mcp_primary"] = "hybrid"
 
     #: Notion hosted MCP streamable HTTP URL (`Other tools` in Notion docs).

@@ -65,7 +65,7 @@ Rules live in **`.cursor/rules/*.mdc`** (YAML frontmatter: `alwaysApply` or `glo
 ## Other files touched during bootstrap
 
 - **`README.md`**: setup, pre-commit, sync, Cursor pointer, git note.
-- **`.kiro/settings/mcp.json`**: points MCP server at `python -m iso_agent.mcp.stdio_server` with repo `cwd`.
+- **`.kiro/settings/mcp.json.example`**: template for Kiro MCP. Copy to **`mcp.json`** (gitignored) and set **`command`** to your venv’s **`python`** if **`.venv/bin/python`** is wrong for your OS; **`cwd`** should be the **iso-agent repo root** (often **`.`** when Kiro uses workspace-relative paths).
 - **Root `agent.py` / `mcp_server.py`**: removed in favor of `src/iso_agent` + console scripts.
 
 ---

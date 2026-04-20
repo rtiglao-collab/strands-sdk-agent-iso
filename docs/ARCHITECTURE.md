@@ -2,18 +2,18 @@
 
 ## Layers (mental model)
 
-1. **L1 — Router / primary handler**  
+1. **L1 — Router / primary handler**
    Owns the HTTP or chat adapter. Parses the platform payload, derives `user_key`, chooses DM vs shared space rules, loads the minimum thread context, invokes L3 with an explicit `UserScope`. Does not infer identity from free text.
 
-2. **L2 — Per-user scope**  
+2. **L2 — Per-user scope**
    Filesystem or database paths keyed by `user_key`. Profile, reminders, and conclusions stay under this subtree. L3 receives `UserScope` so tools and session managers write to the correct partition.
 
-3. **L3 — Shared execution plane**  
+3. **L3 — Shared execution plane**
    Strands `Agent`, `GraphBuilder` / `Swarm`, `@tool` modules, MCP clients, optional `AgentSkills`. Code here is shared; side effects must accept scoped paths or clients passed from L2.
 
 ### Neuuf coordinator team (Phase 1)
 
-The **Neuuf ISO coordinator** lives under **`src/iso_agent/l3_runtime/team/`**: a primary `Agent` plus **specialists as tools** (same pattern as `samples/02-samples/05-personal-assistant/`). Each specialist’s Python wrapper lives in its own module (e.g. **`researcher_tool.py`**); prompts stay markdown under **`knowledge/agents/`** (`neuuf_coordinator`, `researcher`, `governance_evidence`, `gap_analyst`, `comms_coordinator`). Set `ISO_AGENT_PRIMARY_MODE=neuuf` so **`l1_router/handler.py`** routes to this team, or run **`iso-neuuf-coordinator`** for a dedicated interactive CLI (optional `STRANDS_TOOL_CONSOLE_MODE` for clearer tool traces). Roadmap: **`docs/NEUUF_ISO_PHASE_PLAN.md`**.
+The **Neuuf ISO coordinator** lives under **`src/iso_agent/l3_runtime/team/`**: a primary `Agent` plus **specialists as tools** (same pattern as `samples/02-samples/05-personal-assistant/`). Each specialist’s Python wrapper lives in its own module (e.g. **`researcher_tool.py`**); prompts stay markdown under **`knowledge/agents/`** (`neuuf_coordinator`, `researcher`, `governance_evidence`, `gap_analyst`, `comms_coordinator`). Set `ISO_AGENT_PRIMARY_MODE=neuuf` so **`l1_router/handler.py`** routes to this team, or run **`iso-neuuf-coordinator`** for a dedicated interactive CLI (`STRANDS_TOOL_CONSOLE_MODE` + **Rich** streaming on a TTY unless **`--plain-console`**). Roadmap: **`docs/NEUUF_ISO_PHASE_PLAN.md`**. Rich wiring lives in **`l3_runtime/cli/rich_agent_callback.py`** and is passed via **`build_neuuf_coordinator(..., callback_handler=...)`** from the CLI only.
 
 #### Checklist: adding a new specialist or agent surface
 
@@ -70,7 +70,9 @@ For Strands behavior and conventions, use the **local SDK checkout** path and re
 
 **Phase 3 Drive:** Read-only tools in **`l3_runtime/tools/drive_tools.py`** with client helpers in **`l3_runtime/integrations/drive_client.py`**; merged on the **coordinator** `Agent` in **`l3_runtime/team/coordinator.py`**. Requires optional `iso-agent[drive]` install and allowlisted folder/file IDs (see README).
 
-**Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`** with **`l3_runtime/integrations/notion_client.py`**; allowlists are **env ∪ per-user persisted JSON** via **`l2_user/notion_allowlist_store.py`**. Optional hosted **Notion MCP** (user OAuth, **`l3_runtime/integrations/notion_mcp.py`** + **`notion_mcp_oauth.py`**) merges on the coordinator when **`ISO_AGENT_NOTION_TRANSPORT`** is `hybrid` (default) or `mcp_primary` and **`memory/users/.../notion/mcp_oauth.json`** exists; local REPL can run OAuth via **`notion_mcp_oauth_interactive_login`** (`docs/NOTION_MCP.md`). Requires `iso-agent[notion]`, **`NOTION_TOKEN`**, and at least one read/parent id (env or file) before read/create succeed (see README).
+**Google Workspace MCP (optional):** Stdio MCP client in **`l3_runtime/integrations/google_workspace_mcp.py`** (`npx google-workspace-mcp serve`, default **`--read-only`**); merged on the coordinator when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** (see **`docs/INTEGRATIONS_WALKTHROUGH.md`**). Separate from service-account **`drive_*`** tools.
+
+**Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`**, backed by hosted **Notion MCP** via **`l3_runtime/integrations/notion_mcp.py`**, **`notion_mcp_runtime.py`**, and **`notion_mcp_oauth.py`**; **`notion_client.py`** supplies id/title helpers only. Allowlists are **env ∪ per-user persisted JSON** via **`l2_user/notion_allowlist_store.py`**. When **`ISO_AGENT_NOTION_TRANSPORT`** is `hybrid` (default) or `mcp_primary` and **`memory/users/.../notion/mcp_oauth.json`** exists, tools start an MCP session; local REPL can run OAuth via **`notion_mcp_oauth_interactive_login`** (`docs/NOTION_MCP.md`). Install `iso-agent[notion]` for optional scripts/helpers; read/create need OAuth plus allowlisted ids where applicable (see README).
 
 **Coding tools:** **`l3_runtime/tools/coding_tools.py`** registers **`strands_tools`** `python_repl`, `editor`, `shell`, and `journal` when **`build_neuuf_coordinator(..., include_coding_tools=True)`** (default). **`l1_router/google_chat.py`** passes **`include_coding_tools=False`** for Chat ingress.
 

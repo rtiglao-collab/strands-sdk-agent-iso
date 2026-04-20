@@ -14,4 +14,4 @@ alwaysApply: false
 - **New libraries**: follow **`discovery-first.mdc`** — use Strands/MCP/stdlib and existing AWS patterns before adding dependencies.
 - **Perplexity MCP**: `l3_runtime/integrations/perplexity.py` — opt-in Docker; never log `PERPLEXITY_API_KEY`.
 - **Google Drive**: `l3_runtime/tools/drive_tools.py` — allowlist-only; install `iso-agent[drive]`; never log file contents; use `GOOGLE_APPLICATION_CREDENTIALS` (service account JSON path).
-- **Notion**: `l3_runtime/tools/notion_tools.py` — allowlist-only; install `iso-agent[notion]`; never log `NOTION_TOKEN` or full page bodies in application logs.
+- **Notion**: `l3_runtime/tools/notion_tools.py` — allowlist-only; MCP + OAuth (`notion_mcp.py`, `docs/NOTION_MCP.md`); install `iso-agent[notion]` for helpers; never log OAuth tokens, `NOTION_TOKEN`, or full page bodies in application logs.

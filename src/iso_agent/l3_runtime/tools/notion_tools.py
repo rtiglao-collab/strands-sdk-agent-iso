@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from typing import Any
 
@@ -13,6 +12,7 @@ from iso_agent.config import get_settings
 from iso_agent.l2_user import notion_allowlist_store, notion_page_index_store
 from iso_agent.l2_user.user_scope import UserScope
 from iso_agent.l3_runtime.integrations import notion_client, notion_mcp
+from iso_agent.l3_runtime.integrations.notion_mcp_runtime import NotionMcpRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ _NOTION_TRACE_STDERR_READY = False
 
 
 def _ensure_notion_trace_stderr() -> None:
-    """Send ``notion_trace`` INFO logs to stderr when root logging is WARNING (common CLI default)."""
+    """Send ``notion_trace`` INFO logs to stderr when root logging is WARNING."""
     global _NOTION_TRACE_STDERR_READY
     if _NOTION_TRACE_STDERR_READY:
         return
@@ -37,38 +37,33 @@ def _ensure_notion_trace_stderr() -> None:
 
 
 def build_notion_tools(scope: UserScope) -> list[Any]:
-    """Build Notion tools when ``NOTION_TOKEN`` is present (``notion_enabled`` defaults on).
+    """Build Notion QMS tools backed by **hosted Notion MCP** (OAuth under ``memory/.../notion/``).
 
-    Set ``ISO_AGENT_NOTION_ENABLED=false`` to disable Notion tools entirely. Read/draft
-    allowlists are ``ISO_AGENT_NOTION_ALLOWED_*`` merged with per-user disk
-    (``memory/users/<user_key>/notion/allowlist.json``). Tools are registered even when
-    merged lists are empty so the agent can bootstrap via ``notion_allowlist_*`` and discovery.
+    Set ``ISO_AGENT_NOTION_ENABLED=false`` to disable Notion tools entirely. Set
+    ``ISO_AGENT_NOTION_TRANSPORT=rest_only`` to omit tools (no MCP). Read/draft allowlists are
+    ``ISO_AGENT_NOTION_ALLOWED_*`` merged with per-user disk
+    (``memory/users/<user_key>/notion/allowlist.json``). Tools register when OAuth is configured
+    and the MCP session starts; run ``notion_mcp_oauth_interactive_login`` (REPL) or
+    ``iso-notion-mcp-login`` first.
     """
     settings = get_settings()
     _discovery_effective = settings.notion_discovery_enabled
-    if notion_mcp.notion_mcp_primary_hides_rest_discovery(scope):
-        _discovery_effective = False
     if not settings.notion_enabled:
         return []
-
-    token = os.environ.get("NOTION_TOKEN", "").strip()
-    if not token:
-        logger.warning("notion=token_missing | NOTION_TOKEN unset")
+    if settings.notion_transport == "rest_only":
+        logger.warning("notion=transport_rest_only | Notion tools disabled")
         return []
 
-    try:
-        client = notion_client.build_notion_client(token)
-    except ImportError as exc:
+    mcp_client = notion_mcp.ensure_notion_mcp_client(scope)
+    if mcp_client is None:
         logger.warning(
-            "notion=import_failed hint=<%s> exc_type=<%s>",
-            "pip install iso-agent[notion]",
-            type(exc).__name__,
-            exc_info=exc,
+            "notion=mcp_unavailable | configure Notion MCP OAuth "
+            "(memory/users/<user_key>/notion/mcp_oauth.json) and ISO_AGENT_NOTION_TRANSPORT "
+            "hybrid or mcp_primary",
         )
         return []
-    except Exception as exc:
-        logger.warning("notion=client_failed exc_type=<%s>", type(exc).__name__, exc_info=exc)
-        return []
+
+    mcp_rt = NotionMcpRuntime(mcp_client)
 
     tools_out: list[Any] = []
     _ensure_notion_trace_stderr()
@@ -77,11 +72,10 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
         @tool(
             name="notion_discover_connected_pages",
             description=(
-                "Read-only discovery: list Notion pages this integration can access "
-                "(id, title, parent, url) via the search API. Optional query narrows results. "
-                "Scope is pages shared with this integration in the Notion UI—not the draft "
-                "parent allowlist. For notion_allowlist_add_read_page / add_draft_parent, copy "
-                "the exact id=... from these lines (do not invent ids from titles or URLs). "
+                "Read-only discovery: list Notion pages the signed-in user can access "
+                "(id, title, parent, url) via Notion MCP search. Optional query narrows results. "
+                "For notion_allowlist_add_read_page / add_draft_parent, copy the exact id=... "
+                "from these lines (do not invent ids from titles or URLs). "
                 "To persist a searchable copy under memory/users/.../notion/, call "
                 "notion_refresh_page_index."
             ),
@@ -99,16 +93,14 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
                 len(query.strip()),
             )
             try:
-                hits = notion_client.search_connected_pages(
-                    client, query=query, page_size=max_pages
-                )
+                hits = mcp_rt.search_pages(query=query, page_size=max_pages)
             except Exception as exc:
                 logger.warning(
                     "notion=discover_failed exc_type=<%s>",
                     type(exc).__name__,
                     exc_info=exc,
                 )
-                return "error=discover_failed | check NOTION_TOKEN and page connections"
+                return "error=discover_failed | check Notion MCP OAuth and search tool availability"
             if not hits:
                 idx_n = len(notion_page_index_store.load_index(scope).entries)
                 logger.info(
@@ -117,15 +109,18 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
                     idx_n,
                 )
                 base = (
-                    "empty_results | connect at least one page to this integration "
-                    "(Notion: page ... → Connections → your integration)"
+                    "empty_results | zero page-shaped hits from MCP search for this query (often "
+                    "empty or very narrow query, or response shape the indexer did not parse). "
+                    "Not proof of bad OAuth—raw notion_mcp_* tools (e.g. notion-search, "
+                    "get-teams) can still succeed. Try a non-empty query or raw search before "
+                    "re-OAuth."
                 )
                 if idx_n:
                     return (
                         f"{base} | stale_disk_index | on_disk_entries=<{idx_n}> — run "
                         "notion_refresh_page_index now (it replaces the file with live search; "
-                        "zero hits clears stale UUIDs). Do not trust notion_search_page_index until "
-                        "then."
+                        "zero hits clears stale UUIDs). Do not trust "
+                        "notion_search_page_index until then."
                     )
                 return base
             logger.info(
@@ -159,7 +154,7 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
     @tool(
         name="notion_allowlist_add_read_page",
         description=(
-            "Allow reading a Notion page by id: verifies the integration can retrieve the page, "
+            "Allow reading a Notion page by id: verifies Notion MCP can fetch the page, "
             "then appends the id to this user's persisted read allowlist (disk). Merged with "
             "ISO_AGENT_NOTION_ALLOWED_PAGE_IDS. Pass the exact id=... from "
             "notion_discover_connected_pages / notion_refresh_page_index output (32 hex), "
@@ -174,7 +169,7 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
             page_norm = notion_client.normalize_notion_page_id(page_id)
         except ValueError:
             return "error=invalid_page_id"
-        ok_ret, diag = notion_client.page_retrieve_diagnostic(client, page_id=page_norm)
+        ok_ret, diag = mcp_rt.page_accessible(page_id=page_norm)
         if not ok_ret:
             logger.info(
                 "notion_trace allowlist_add_read user_key=<%s> outcome=not_accessible detail=<%s>",
@@ -182,12 +177,11 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
                 diag,
             )
             return (
-                "error=page_not_accessible | pages.retrieve failed "
+                "error=page_not_accessible | notion-fetch failed "
                 f"({diag}). "
-                "If notion_discover_connected_pages just listed this page, the usual fix is to "
-                "pass the exact id=... from that tool output (copy the UUID only)—not the title "
-                "or slug from a browser URL. If the id matches and this still fails, check Notion "
-                "⋯→Connections or NOTION_TOKEN workspace."
+                "If notion_discover_connected_pages just listed this page, pass the exact id=... "
+                "from that tool output (UUID only). If the id matches and this still fails, "
+                "re-run Notion MCP OAuth or confirm your account can open the page in Notion."
             )
         ok, code = notion_allowlist_store.add_persisted_read_page(scope, page_norm)
         if not ok:
@@ -196,7 +190,7 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
 
     def _add_draft_parent_normalized(parent_norm: str) -> str:
         """Verify Notion access and append ``parent_norm`` to the persisted draft-parent list."""
-        ok_ret, diag = notion_client.page_retrieve_diagnostic(client, page_id=parent_norm)
+        ok_ret, diag = mcp_rt.page_accessible(page_id=parent_norm)
         if not ok_ret:
             logger.info(
                 "notion_trace allowlist_add_draft_parent user_key=<%s> outcome=not_accessible "
@@ -205,10 +199,10 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
                 diag,
             )
             return (
-                "error=parent_not_accessible | pages.retrieve failed "
+                "error=parent_not_accessible | notion-fetch failed "
                 f"({diag}). "
                 "Use the exact id=... from discovery/index output for this parent page. "
-                "If the id is correct and this still fails, check Notion ⋯→Connections or token."
+                "If the id is correct and this still fails, re-run Notion MCP OAuth."
             )
         ok, code = notion_allowlist_store.add_persisted_draft_parent(scope, parent_norm)
         if not ok:
@@ -359,15 +353,17 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
     @tool(
         name="notion_refresh_page_index",
         description=(
-            "Replace the persisted page index with this run's Notion **search** results "
+            "Replace the persisted page index with this run's Notion MCP **search** results "
             "(``memory/users/<user_key>/notion/discovered_page_index.json``). Same API as "
             "notion_discover_connected_pages; stale ids from older refreshes are dropped. "
             "**Best practice:** (1) For **listing everything under one hub page** (true subtree), "
             "use a **broad** refresh first—**query** empty string and **max_pages** high "
             "(e.g. 100)—then **notion_page_index_subtree(parent_page_id=hub id)**. A **narrow** "
             "**query** replaces the whole index with only those search hits, so child pages whose "
-            "titles do not match the query **vanish** from the index (e.g. Project Tracker missing). "
-            "(2) For **finding** pages by phrase, set **query** to that phrase, then outline/search. "
+            "titles do not match the query **vanish** from the index "
+            "(e.g. Project Tracker missing). "
+            "(2) For **finding** pages by phrase, set **query** to that phrase, then "
+            "outline/search. "
             "Then use notion_allowlist_add_draft_parent as needed."
         ),
     )
@@ -385,16 +381,14 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
             max_pages,
         )
         try:
-            hits = notion_client.search_connected_pages(
-                client, query=query, page_size=max_pages
-            )
+            hits = mcp_rt.search_pages(query=query, page_size=max_pages)
         except Exception as exc:
             logger.warning(
                 "notion=index_refresh_failed exc_type=<%s>",
                 type(exc).__name__,
                 exc_info=exc,
             )
-            return "error=search_failed | check NOTION_TOKEN and page connections"
+            return "error=search_failed | check Notion MCP OAuth and search availability"
         if not hits:
             # Always persist (even zero hits) so a stale on-disk index is replaced when live
             # search returns nothing—otherwise old UUIDs mislead bootstrap/allowlist_add.
@@ -413,8 +407,8 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
             qshow = query.strip() or "(empty)"
             return (
                 f"ok=index_cleared merged_entries=<{n}> | {status} | search_query_used=<{qshow}> | "
-                "live_search_returned_zero_pages — connect this integration on pages in Notion "
-                "(⋯ → Connections), verify NOTION_TOKEN, widen or change query, then refresh again"
+                "live_search_returned_zero_page_ids — widen or change query, or use raw "
+                "notion_mcp notion-search; zero hits here is not proof of OAuth failure"
             )
         logger.info(
             "notion_trace refresh user_key=<%s> search_hit_count=<%d>",
@@ -522,8 +516,8 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
             "persisted index row, plus an **ancestor_titles_top_down** chain inferred only from "
             "index parent_page_id links (hub → … → this page). Notion does not expose sidebar "
             "grouping when parent.type is workspace—use this chain and notion_page_index_subtree "
-            "for structure. Set include_live_retrieve=true for one "
-            "pages.retrieve (parent, times, property **keys** only—no property values)."
+            "for structure. Set include_live_retrieve=true for one live **notion-fetch** summary "
+            "(best-effort parent, times, property keys)."
         ),
     )
     def notion_page_metadata(page_id: str, include_live_retrieve: bool = False) -> str:
@@ -536,10 +530,12 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
             return "error=invalid_page_id"
         live: dict[str, Any] | None = None
         if include_live_retrieve:
-            ok, diag = notion_client.page_retrieve_diagnostic(client, page_id=page_norm)
+            ok, diag = mcp_rt.page_accessible(page_id=page_norm)
             if not ok:
                 return f"error=live_retrieve_failed | {diag}"
-            live = notion_client.fetch_page_summary(client, page_id=page_norm)
+            live = mcp_rt.fetch_page_summary_live(page_id=page_norm)
+            if live is None:
+                return "error=live_retrieve_failed | empty_summary"
         return notion_page_index_store.format_page_metadata_report(
             scope, page_norm, live_summary=live
         )
@@ -567,8 +563,7 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
         if drive_link.strip():
             text = f"{text}\n\n---\nDrive evidence: {drive_link.strip()}"
         try:
-            created = notion_client.create_child_page(
-                client,
+            created = mcp_rt.create_child_page(
                 parent_page_id=parent_norm,
                 title=safe_title,
                 body=text or " ",
@@ -580,9 +575,14 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
                 type(exc).__name__,
                 exc_info=exc,
             )
-            return "error=create_failed | check integration capabilities and parent id"
+            return "error=create_failed | check Notion MCP create-pages and parent id"
+        err = str(created.get("error", "")).strip()
+        if err:
+            return f"error=create_failed | {err[:1500]}"
         pid = str(created.get("id", ""))
         url = str(created.get("url", ""))
+        if not pid:
+            return "error=create_failed | missing page id in MCP response"
         return f"page_id={pid}\nurl={url}"
 
     @tool(
@@ -757,12 +757,18 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
         """Fetch page content as text."""
         logger.debug("notion_read_page user_key=<%s> page_id=<%s>", scope.user_key, page_id)
         if not notion_client.is_valid_notion_id(page_id):
-            logger.info("notion_trace read_page user_key=<%s> outcome=invalid_page_id", scope.user_key)
+            logger.info(
+                "notion_trace read_page user_key=<%s> outcome=invalid_page_id",
+                scope.user_key,
+            )
             return "error=invalid_page_id"
         try:
             page_norm = notion_client.normalize_notion_page_id(page_id)
         except ValueError:
-            logger.info("notion_trace read_page user_key=<%s> outcome=invalid_page_id", scope.user_key)
+            logger.info(
+                "notion_trace read_page user_key=<%s> outcome=invalid_page_id",
+                scope.user_key,
+            )
             return "error=invalid_page_id"
         s = get_settings()
         pages_merged = notion_allowlist_store.merged_page_ids(scope, s)
@@ -789,7 +795,7 @@ def build_notion_tools(scope: UserScope) -> list[Any]:
                 "notion_allowlist_add_read_page(page_id) (no Connections change needed)."
             )
         try:
-            text = notion_client.fetch_page_text(client, page_id=page_norm)
+            text = mcp_rt.fetch_page_text(page_id=page_norm)
         except Exception as exc:
             logger.warning(
                 "notion=read_failed page_id=<%s> exc_type=<%s>",

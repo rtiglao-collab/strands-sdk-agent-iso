@@ -96,6 +96,17 @@ def build_drive_tools(scope: UserScope) -> list[Any]:
         return "\n".join(lines)
 
     @tool(
+        name="drive_list_files",
+        description=(
+            "Same as drive_list_folder: list files in one allowlisted folder. "
+            "Pass folder_id from ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS."
+        ),
+    )
+    def drive_list_files(folder_id: str) -> str:
+        """Alias for models that say list_files; forwards to ``drive_list_folder``."""
+        return drive_list_folder(folder_id)
+
+    @tool(
         name="drive_read_document",
         description=(
             "Export a Google Doc or Sheet as text when its parent folder is allowlisted "
@@ -142,4 +153,4 @@ def build_drive_tools(scope: UserScope) -> list[Any]:
             return body[:max_chars] + "\n...truncated..."
         return body
 
-    return [drive_list_folder, drive_read_document]
+    return [drive_list_folder, drive_list_files, drive_read_document]

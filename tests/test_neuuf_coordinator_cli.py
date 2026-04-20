@@ -7,7 +7,16 @@ import sys
 import pytest
 from strands.handlers.callback_handler import PrintingCallbackHandler
 
+from iso_agent.l3_runtime.cli import RichAgentConsoleCallback
 from iso_agent.scripts import neuuf_coordinator_cli as cli
+
+
+def test_print_agent_result_skips_rich_callback(capsys: pytest.CaptureFixture[str]) -> None:
+    class _Agent:
+        callback_handler = RichAgentConsoleCallback()
+
+    cli._print_agent_result(_Agent(), "duplicate")
+    assert "duplicate" not in capsys.readouterr().out
 
 
 def test_neuuf_cli_one_shot_query(
@@ -143,4 +152,3 @@ def test_neuuf_cli_notion_mcp_login_runs_login_and_exits(
     )
     cli.main()
     assert called and called[0]
-

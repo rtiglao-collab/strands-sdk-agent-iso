@@ -1,6 +1,7 @@
-"""Notion API helpers (integration token, pages + blocks).
+"""Notion REST API helpers (pages + blocks) for manual / legacy callers.
 
-Token: read ``NOTION_TOKEN`` from the environment (Notion internal integration secret).
+Coordinator ``notion_*`` tools use hosted Notion MCP instead; this module still
+reads ``NOTION_TOKEN`` when REST helpers are invoked (e.g. ``tests/manual_notion_page_inspect.py``).
 """
 
 from __future__ import annotations
@@ -39,22 +40,56 @@ def is_valid_notion_id(value: str) -> bool:
 
 
 class _NotionClient(Protocol):
-    def pages(self) -> Any: ...
+    """Shape of ``notion_client.Client`` (``pages`` / ``blocks`` are endpoint objects, not calls)."""
 
-    def blocks(self) -> Any: ...
+    pages: Any
+    blocks: Any
 
     def search(self, **kwargs: Any) -> Any: ...
 
 
-def page_exists(client: _NotionClient, *, page_id: str) -> bool:
-    """Return True if Notion returns a page for ``page_id`` (integration must have access)."""
+def page_retrieve_diagnostic(client: _NotionClient, *, page_id: str) -> tuple[bool, str]:
+    """Try ``pages.retrieve``; return ``(True, "")`` or ``(False, short_reason)`` (no secrets)."""
     pid = normalize_notion_page_id(page_id)
     try:
-        client.pages().retrieve(page_id=pid)
-    except Exception:
-        return False
-    else:
-        return True
+        client.pages.retrieve(page_id=pid)
+    except Exception as exc:
+        tag = type(exc).__name__
+        code = getattr(exc, "code", None)
+        status = getattr(exc, "status", None)
+        if code is not None:
+            return False, f"{tag}(code={code})"
+        if status is not None:
+            return False, f"{tag}(status={status})"
+        return False, tag
+    return True, ""
+
+
+def page_exists(client: _NotionClient, *, page_id: str) -> bool:
+    """Return True if Notion returns a page for ``page_id`` (integration must have access)."""
+    ok, _ = page_retrieve_diagnostic(client, page_id=page_id)
+    return ok
+
+
+def fetch_page_summary(client: _NotionClient, *, page_id: str) -> dict[str, Any]:
+    """Return a small, log-safe dict from ``pages.retrieve`` (no rich property payloads)."""
+    pid = normalize_notion_page_id(page_id)
+    raw = cast(dict[str, Any], client.pages.retrieve(page_id=pid))
+    props = raw.get("properties") or {}
+    keys: list[str] = []
+    if isinstance(props, dict):
+        keys = sorted(props.keys())
+    return {
+        "id": str(raw.get("id", "")),
+        "url": str(raw.get("url", "")),
+        "parent": raw.get("parent"),
+        "created_time": raw.get("created_time"),
+        "last_edited_time": raw.get("last_edited_time"),
+        "archived": raw.get("archived"),
+        "in_trash": raw.get("in_trash"),
+        "title_plain": page_plain_title(raw),
+        "property_schema_keys": keys,
+    }
 
 
 def build_notion_client(token: str) -> _NotionClient:
@@ -100,12 +135,27 @@ def create_child_page(
     children = _paragraph_blocks(body)
     return cast(
         dict[str, Any],
-        client.pages().create(
+        client.pages.create(
             parent={"type": "page_id", "page_id": parent_page_id},
             properties=props,
             children=children,
         ),
     )
+
+
+def parent_page_id_from_parent_dict(parent: dict[str, Any]) -> str | None:
+    """Return normalized parent page id when ``parent`` is Notion's ``page_id`` block."""
+    if not isinstance(parent, dict):
+        return None
+    if parent.get("type") != "page_id":
+        return None
+    raw = parent.get("page_id")
+    if not raw:
+        return None
+    try:
+        return normalize_notion_page_id(str(raw))
+    except ValueError:
+        return None
 
 
 def page_plain_title(page: dict[str, Any]) -> str:
@@ -142,28 +192,58 @@ def search_connected_pages(
     return [cast(dict[str, Any], item) for item in raw if isinstance(item, dict)]
 
 
-def fetch_page_text(client: _NotionClient, *, page_id: str, max_blocks: int = 50) -> str:
-    """Return plain text extracted from top-level blocks (paragraphs and headings)."""
+def fetch_page_text(
+    client: _NotionClient,
+    *,
+    page_id: str,
+    max_blocks: int = 50,
+    max_depth: int = 3,
+) -> str:
+    """Return plain text from page blocks, recursing into children (columns, toggles, etc.).
+
+    ``max_blocks`` caps total **blocks enumerated** across the tree; ``max_depth`` limits nesting
+    depth from the page root (0 = direct children only).
+    """
     parts: list[str] = []
-    cursor: str | None = None
-    count = 0
     page_id = normalize_notion_page_id(page_id)
-    while count < max_blocks:
-        kwargs: dict[str, Any] = {"block_id": page_id, "page_size": 100}
-        if cursor:
-            kwargs["start_cursor"] = cursor
-        resp = client.blocks().children.list(**kwargs)
-        for block in resp.get("results", []):
-            count += 1
-            if count > max_blocks:
+    seen = 0
+
+    def _append_rich(payload: dict[str, Any]) -> None:
+        for rt in payload.get("rich_text", []) or []:
+            if isinstance(rt, dict) and rt.get("type") == "text":
+                t = str(rt.get("plain_text", ""))
+                if t:
+                    parts.append(t)
+
+    def walk(block_id: str, depth: int) -> None:
+        nonlocal seen
+        if depth > max_depth or seen >= max_blocks:
+            return
+        cursor: str | None = None
+        while seen < max_blocks:
+            kwargs: dict[str, Any] = {"block_id": block_id, "page_size": 100}
+            if cursor:
+                kwargs["start_cursor"] = cursor
+            resp = client.blocks.children.list(**kwargs)
+            for block in resp.get("results", []):
+                if seen >= max_blocks:
+                    break
+                seen += 1
+                btype = str(block.get("type", ""))
+                payload = block.get(btype, {}) if btype else {}
+                if isinstance(payload, dict):
+                    _append_rich(payload)
+                bid = block.get("id")
+                if (
+                    depth < max_depth
+                    and seen < max_blocks
+                    and block.get("has_children")
+                    and bid
+                ):
+                    walk(str(bid), depth + 1)
+            cursor = resp.get("next_cursor")
+            if not resp.get("has_more") or not cursor:
                 break
-            btype = block.get("type", "")
-            payload = block.get(btype, {})
-            rich = payload.get("rich_text", [])
-            for rt in rich:
-                if rt.get("type") == "text":
-                    parts.append(str(rt.get("plain_text", "")))
-        cursor = resp.get("next_cursor")
-        if not resp.get("has_more") or not cursor:
-            break
+
+    walk(page_id, 0)
     return "\n".join(p for p in parts if p).strip()

@@ -13,6 +13,13 @@ def test_load_role_prompt_researcher() -> None:
     assert "research" in text.lower()
 
 
+def test_neuuf_coordinator_prompt_mandates_natural_language_notion_flow() -> None:
+    text = load_role_prompt("neuuf_coordinator")
+    assert "natural-language notion creates" in text.lower()
+    assert "notion_bootstrap_draft_parent_choices" in text
+    assert "confirm-before-write" in text.lower()
+
+
 def test_primary_mode_demo_default() -> None:
     get_settings.cache_clear()
     s = Settings()

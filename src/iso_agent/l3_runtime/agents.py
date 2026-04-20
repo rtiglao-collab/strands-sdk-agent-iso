@@ -1,5 +1,8 @@
 """Agent factories (primary, specialists)."""
 
+from collections.abc import Callable
+from typing import Any
+
 from strands import Agent
 from strands_tools import calculator
 
@@ -33,6 +36,7 @@ def create_neuuf_coordinator_agent(
     *,
     include_coding_tools: bool = True,
     include_notion_mcp_oauth_tool: bool = False,
+    callback_handler: Callable[..., Any] | None = None,
 ) -> Agent:
     """Neuuf ISO coordinator (agents-as-tools). See ``docs/NEUUF_ISO_PHASE_PLAN.md``."""
     from iso_agent.l3_runtime.team.coordinator import build_neuuf_coordinator
@@ -41,4 +45,5 @@ def create_neuuf_coordinator_agent(
         scope,
         include_coding_tools=include_coding_tools,
         include_notion_mcp_oauth_tool=include_notion_mcp_oauth_tool,
+        callback_handler=callback_handler,
     )

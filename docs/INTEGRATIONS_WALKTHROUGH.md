@@ -1,4 +1,4 @@
-# Integrations walkthrough (Drive, Notion, Perplexity)
+# Integrations walkthrough (Drive, Google Workspace MCP, Notion, Perplexity)
 
 This document is an **operator guide**: what to create in each vendor console, which secrets to hold locally, and how to prove each integration works with the Neuuf coordinator (`iso-neuuf-coordinator`).
 
@@ -63,7 +63,7 @@ Docker will **pull** the image if missing (needs network once).
 iso-neuuf-coordinator --query "Use neuuf_researcher only. List the tool names the researcher can call, then answer in one sentence whether web search is available."
 ```
 
-**Pass:** narrative mentions MCP / search-style tools, or a successful short web-backed answer.  
+**Pass:** narrative mentions MCP / search-style tools, or a successful short web-backed answer.
 **Fail:** logs show `perplexity_mcp=startup_failed` — check Docker running, API key, and corporate Docker allowlists.
 
 ---
@@ -76,8 +76,8 @@ iso-neuuf-coordinator --query "Use neuuf_researcher only. List the tool names th
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and select or create a **project**.
 2. **APIs & Services → Library** → enable **Google Drive API**.
-3. **APIs & Services → Credentials → Create credentials → Service account.**  
-   - Name it e.g. `iso-agent-drive-readonly`.  
+3. **APIs & Services → Credentials → Create credentials → Service account.**
+   - Name it e.g. `iso-agent-drive-readonly`.
    - Grant **no** broad owner roles; Drive access is via **sharing**, not IAM “Drive admin” (unless your org uses domain-wide delegation—this walkthrough uses **file/folder sharing** to the SA email, which is simpler).
 4. **Keys → Add key → JSON** → save the file to a **gitignored** path. Options:
    - **Inside this clone (local dev):** `secrets/google/your-name.json` — see **`secrets/README.md`** (`*.json` under `secrets/` is ignored by git).
@@ -87,9 +87,9 @@ iso-neuuf-coordinator --query "Use neuuf_researcher only. List the tool names th
 
 1. Open the JSON and find **`client_email`** (ends with `gserviceaccount.com`).
 2. In Google Drive UI, share the **folders** (and optionally specific files) your agent must read with that **client_email** (Viewer is enough).
-3. Collect **Folder ID** from the browser URL when the folder is open:  
-   `https://drive.google.com/drive/folders/<FOLDER_ID>`  
-   For a file:  
+3. Collect **Folder ID** from the browser URL when the folder is open:
+   `https://drive.google.com/drive/folders/<FOLDER_ID>`
+   For a file:
    `https://drive.google.com/file/d/<FILE_ID>/view`
 
 ### 2.3 Environment variables
@@ -100,7 +100,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/<YOUR_SERVICE_ACCOUNT
 # Option B — key outside the repo:
 # export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/iso-drive-sa.json"
 
-export ISO_AGENT_DRIVE_ENABLED=true
+# ISO_AGENT_DRIVE_ENABLED defaults true; omit or set false to disable Drive tools.
 # Comma-separated Google Drive folder IDs (allowlist). There is no ISO_AGENT_DRIVE_FOLDER_ID.
 export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='folder_id_one,folder_id_two'
 # Optional: allow reading specific files by ID even if parent logic differs
@@ -116,10 +116,75 @@ iso-neuuf-coordinator --query "Use drive_list_folder on an allowlisted folder an
 iso-neuuf-coordinator --query "Use drive_read_document on file ID <allowlisted file id> and return the first 400 characters of extracted text."
 ```
 
-**Pass:** listing and read succeed for allowlisted IDs.  
+**Pass:** listing and read succeed for allowlisted IDs.
 **Fail:** permission or “not allowlisted” — fix sharing or env comma lists (no spaces unless your parser allows—use comma-separated IDs as in README).
 
 **Fail:** HTTP 403 / `accessNotConfigured` / “Google Drive API has not been used in project …” — the **Drive API is off** for the GCP project that owns this service account key. In Google Cloud Console: **APIs & Services → Library → Google Drive API → Enable**, wait a few minutes, retry.
+
+---
+
+## 2.5 Google Workspace MCP (optional stdio)
+
+**What it does:** When **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**, the coordinator merges prefixed **`google_workspace_mcp_*`** tools from the [`google-workspace-mcp`](https://www.npmjs.com/package/google-workspace-mcp) server (Docs, Sheets, Drive, Gmail, Calendar, and more per upstream). This path uses **user OAuth** via the MCP wizard. It is **separate** from **`drive_*`** service-account REST tools (allowlisted folders/files).
+
+### 2.5.1 Machine prerequisites
+
+- **Node.js** and **npm** on **`PATH`** so **`npx`** works.
+
+### 2.5.2 One-time setup (order matters)
+
+The wizard expects an **OAuth 2.0 Client ID** JSON from Google Cloud (**Desktop app** type), not the service-account key used for **`drive_*`**.
+
+1. **GCP — create the client file**
+   In [Google Cloud Console](https://console.cloud.google.com/): pick a project → **APIs & Services → Library** → enable the APIs you need (the upstream wizard lists Docs, Drive, Sheets, Gmail, Calendar, Slides, Forms). Then **Credentials → Create credentials → OAuth client ID → Application type: Desktop** → download the JSON.
+
+2. **Install the client secret on disk** (paths are what `npx google-workspace-mcp setup` prints):
+
+   ```bash
+   mkdir -p ~/.google-mcp
+   cp /path/to/your-downloaded-client-secret.json ~/.google-mcp/credentials.json
+   ```
+
+   If **`❌ Credentials file NOT found at .../credentials.json`** appears, this step was skipped or the path/name is wrong.
+
+3. **Run the MCP setup wizard** (account sign-in):
+
+   ```bash
+   npx google-workspace-mcp setup
+   ```
+
+4. Optional: **`npx google-workspace-mcp status`** to confirm readiness, or **`google-workspace-mcp accounts add <name>`** (per upstream help) after credentials exist.
+
+Then set **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** and start **`iso-neuuf-coordinator`** so **`google_workspace_mcp_*`** tools load.
+
+### 2.5.3 Environment variables
+
+```bash
+export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio
+# Default: append --read-only to serve (recommended). To allow MCP write tools:
+# export ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY=false
+```
+
+To disable (default):
+
+```bash
+export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=disabled
+```
+
+### 2.5.4 First-run behavior
+
+On coordinator build, the process runs **`npx -y google-workspace-mcp serve`** (plus **`--read-only`** unless **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY=false`**). **`npx`** may download the package once (needs network).
+
+### 2.5.5 Verify
+
+```bash
+iso-neuuf-coordinator --query "List tool names that start with google_workspace_mcp_ (if any) and say in one sentence whether Google Workspace MCP is available."
+```
+
+**Pass:** tool list includes **`google_workspace_mcp_`** names and a short capability summary.
+**Fail:** logs show **`google_workspace_mcp=startup_failed`** — check Node/npm, completed **`setup`**, and network/npm allowlists.
+
+**Coexistence:** **`drive_*`** still loads from **`GOOGLE_APPLICATION_CREDENTIALS`** + allowlists when configured; **`google_workspace_mcp_*`** follows the MCP OAuth user. Prefer one path per task to avoid confusing duplicate access.
 
 ---
 
@@ -127,7 +192,7 @@ iso-neuuf-coordinator --query "Use drive_read_document on file ID <allowlisted f
 
 **What it does:**
 
-- **`notion_discover_connected_pages`** (read-only) — **on by default**; lists pages the integration can access via Notion’s search API (id, title, parent, url). Set **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`** to hide this tool. Scope is whatever you **shared with the integration** in the Notion UI.
+- **`notion_discover_connected_pages`** (read-only) — **on by default**; lists pages your **OAuth session** can reach via Notion MCP search (id, title, parent, url). Set **`ISO_AGENT_NOTION_DISCOVERY_ENABLED=false`** to hide this tool.
 - **`notion_read_page`** — full plain-text read for pages in the **merged** allowlist: **`ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`** **∪** ids persisted for this user in **`memory/users/<user_key>/notion/allowlist.json`** (maintain via **`notion_allowlist_*`** tools).
 - **`notion_create_qms_draft`** — creates `[DRAFT]` children only under **merged** draft parents: **`ISO_AGENT_NOTION_ALLOWED_PARENT_IDS`** **∪** persisted parent ids in the same JSON file.
 - **`notion_refresh_page_index`** / **`notion_search_page_index`** / **`notion_page_index_status`** — persist a per-user title→id snapshot under **`memory/users/<user_key>/notion/`** for quick lookup without pasting UUIDs into every user message.
@@ -141,10 +206,9 @@ Optional Drive evidence line in the draft body when your prompt supplies a link.
 
 ### 3.1 Acquire (Notion)
 
-1. In Notion: **Settings & members → Connections → Develop or manage integrations → New integration**.
-2. Type: **Internal** (typical for workspace-only). Name it e.g. `ISO Neuuf agent`.
-3. Copy **Internal Integration Secret** — this is **`NOTION_TOKEN`** (starts with `secret_`). Never commit it.
-4. **Share pages with the integration:** on each Notion page the agent must see in discovery, read in full, or use as a parent for drafts, use **⋯ → Connections →** connect your integration (or “Add connections” in newer UI). Without this, API calls return “not found” or empty discovery.
+1. Complete **OAuth** as in §3.5 so **`memory/users/<user_key>/notion/mcp_oauth.json`** exists for the CLI’s `user_key`.
+2. The signed-in Notion user must be able to **open** target pages in the browser; MCP visibility follows that user’s workspace access.
+3. (Optional) For ad-hoc REST debugging only, create an **internal integration**, set **`NOTION_TOKEN`**, and use **`tests/manual_notion_page_inspect.py`** — this is **not** what **`iso-neuuf-coordinator`** uses for **`notion_*`** tools.
 
 ### 3.2 Collect page UUIDs
 
@@ -164,9 +228,9 @@ Decide:
 ### 3.3 Environment variables
 
 ```bash
-export NOTION_TOKEN='secret_...'
 # ISO_AGENT_NOTION_ENABLED defaults true; use false to disable Notion tools.
 # ISO_AGENT_NOTION_DISCOVERY_ENABLED defaults true (notion_discover_connected_pages).
+# ISO_AGENT_NOTION_TRANSPORT defaults hybrid (MCP when mcp_oauth.json exists).
 export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='uuid-one,uuid-two'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='uuid-parent-for-drafts'
 ```
@@ -192,18 +256,20 @@ Or with an explicit parent id (classic):
 iso-neuuf-coordinator --query "Use notion_create_qms_draft with parent_page_id=<uuid>, title='ISO agent smoke', body='One paragraph.'"
 ```
 
-**Pass:** discovery lists shared pages; allowlisted read returns content; draft appears under the allowlisted parent.  
-**Fail:** 401 → token wrong; 404 / empty discovery → page not shared with integration or wrong UUID.
+**Pass:** discovery lists shared pages; allowlisted read returns content; draft appears under the allowlisted parent.
+**Fail:** OAuth missing or expired; empty discovery → query too narrow or the signed-in user cannot see those pages; wrong UUID.
 
-### 3.5 Notion hosted MCP (OAuth, optional)
+### 3.5 Notion hosted MCP (OAuth, required for coordinator tools)
 
-Hosted Notion MCP uses **user OAuth** (PKCE + dynamic client registration), not `NOTION_TOKEN`. It merges into the coordinator when transport is **`hybrid`** (default) or **`mcp_primary`** and **`memory/users/<user_key>/notion/mcp_oauth.json`** exists. From **`iso-neuuf-coordinator`** REPL you can also ask the agent to call **`notion_mcp_oauth_interactive_login`** once instead of a separate login command.
+The coordinator’s **`notion_*`** tools use **user OAuth** (PKCE + dynamic client registration). Raw **`notion_mcp_*`** tools from the server are also merged when OAuth is configured. From **`iso-neuuf-coordinator`** REPL you can ask the agent to call **`notion_mcp_oauth_interactive_login`** once instead of a separate login command.
 
-1. Set transport to `hybrid` (recommended first) or `mcp_primary`.
+1. Set transport to `hybrid` (default) or `mcp_primary` (avoid **`rest_only`**, which disables Notion tools).
 2. Run **`iso-notion-mcp-login`** (or **`iso-neuuf-coordinator --notion-mcp-login`**) and finish the browser flow.
-3. Restart the coordinator; MCP tools appear with the **`notion_mcp_`** prefix.
+3. Restart or reload the coordinator; **`notion_*`** tools start the MCP session; extra tools appear with the **`notion_mcp_`** prefix.
 
-See **`docs/NOTION_MCP.md`** for parity checklist, redirect URI defaults, and `mcp_primary` behavior (REST discovery tool is hidden when the OAuth file is present).
+See **`docs/NOTION_MCP.md`** for redirect URI defaults and the MCP ↔ **`notion_*`** mapping.
+
+**Legacy:** `NOTION_TOKEN` is only for **`tests/manual_notion_page_inspect.py`** and other ad-hoc REST debugging—not for the coordinator **`notion_*`** path.
 
 **Script:** `python scripts/run_integration_smoke.py` runs discovery + Drive gap-file probe + Perplexity config (no LLM).
 
@@ -226,11 +292,14 @@ export ISO_AGENT_PERPLEXITY_TRANSPORT=docker
 
 # Drive (optional)
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/iso-drive-sa.json"
-export ISO_AGENT_DRIVE_ENABLED=true
+# ISO_AGENT_DRIVE_ENABLED defaults true; omit or set false to disable Drive tools.
 export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='...'
 
-# Notion (optional)
-export NOTION_TOKEN='secret_...'
+# Google Workspace MCP (optional — user OAuth via npx google-workspace-mcp setup)
+# export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio
+
+# Notion (optional — OAuth via iso-notion-mcp-login; see docs/NOTION_MCP.md)
+# export NOTION_TOKEN='secret_...'  # only for tests/manual_notion_page_inspect.py (REST)
 # export ISO_AGENT_NOTION_DISCOVERY_ENABLED=false  # only if you want to hide discover
 export ISO_AGENT_NOTION_ALLOWED_PAGE_IDS='...'
 export ISO_AGENT_NOTION_ALLOWED_PARENT_IDS='...'
@@ -246,12 +315,13 @@ Reload: `source ~/iso-agent.env`, then `iso-neuuf-coordinator`.
 |-------------|----------------|--------|
 | Perplexity | [`src/iso_agent/config.py`](../src/iso_agent/config.py) `perplexity_transport`; `PERPLEXITY_API_KEY` | [`src/iso_agent/l3_runtime/integrations/perplexity.py`](../src/iso_agent/l3_runtime/integrations/perplexity.py) → [`researcher_tool.py`](../src/iso_agent/l3_runtime/team/researcher_tool.py) |
 | Drive | `ISO_AGENT_DRIVE_*` in `Settings` | [`drive_tools.py`](../src/iso_agent/l3_runtime/tools/drive_tools.py) |
-| Notion | `ISO_AGENT_NOTION_*`, `NOTION_TOKEN`, optional MCP transport (`docs/NOTION_MCP.md`) | [`notion_tools.py`](../src/iso_agent/l3_runtime/tools/notion_tools.py), [`notion_mcp.py`](../src/iso_agent/l3_runtime/integrations/notion_mcp.py) |
+| Google Workspace MCP | `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT`, `ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY`; Node **`npx`**; OAuth via **`npx google-workspace-mcp setup`** | [`google_workspace_mcp.py`](../src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py) → [`coordinator.py`](../src/iso_agent/l3_runtime/team/coordinator.py) |
+| Notion | `ISO_AGENT_NOTION_*`, OAuth `mcp_oauth.json` (`docs/NOTION_MCP.md`); `NOTION_TOKEN` only for manual REST scripts | [`notion_tools.py`](../src/iso_agent/l3_runtime/tools/notion_tools.py), [`notion_mcp.py`](../src/iso_agent/l3_runtime/integrations/notion_mcp.py) |
 
 ---
 
 ## 6. Security reminders
 
-- Keep JSON key files and `NOTION_TOKEN` **out of git**; use a secrets manager in production.
+- Keep JSON key files, **`mcp_oauth.json`**, and any **`NOTION_TOKEN`** used for debugging **out of git**; use a secrets manager in production.
 - **Allowlists** are intentional for **strict full-page reads** and **draft parents**; **discovery** lists whatever pages are already shared with the integration in Notion.
 - Rotate keys if leaked; update env on all hosts running `iso-chat-webhook` or workers.

@@ -16,9 +16,9 @@ def build_researcher_tools(scope: UserScope) -> list[Any]:
     research_tools = get_perplexity_mcp_tools() or []
     research = build_inner_specialist(scope, "researcher", extra_tools=research_tools)
     research_desc = (
-        "ISO-aware research specialist with Perplexity web search when "
-        "PERPLEXITY_API_KEY and ISO_AGENT_PERPLEXITY_TRANSPORT=docker are set; "
-        "otherwise model-only."
+        "ISO-aware research specialist (inner agent): Perplexity web search when "
+        "PERPLEXITY_API_KEY and ISO_AGENT_PERPLEXITY_TRANSPORT=docker are set; otherwise "
+        "model-only. Does not include coordinator Drive/Notion tools—use those at top level."
     )
 
     @tool(
