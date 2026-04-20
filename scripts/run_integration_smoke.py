@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live integration smoke: Perplexity, Drive (gap-named file), Notion discovery.
+"""Live integration smoke: in-repo gap prompt, Perplexity, Notion discovery (no LLM).
 
 Run from the repo root with secrets in the environment or a local ``.env`` file::
 
@@ -35,64 +35,6 @@ def _perplexity_line() -> tuple[str, bool]:
         f"mcp_ready=<{ok}> | researcher can attach Perplexity MCP when all true"
     )
     return msg, ok or transport == "disabled"
-
-
-def _drive_gap_doc() -> tuple[str, bool]:
-    import os
-
-    from iso_agent.config import get_settings
-    from iso_agent.l3_runtime.integrations import drive_client
-
-    get_settings.cache_clear()
-    s = get_settings()
-    if not s.drive_enabled:
-        return "drive skipped | ISO_AGENT_DRIVE_ENABLED is false", True
-    cred = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
-    if not cred:
-        return "drive fail | GOOGLE_APPLICATION_CREDENTIALS unset", False
-    raw_folders = s.drive_allowed_folder_ids.replace("\n", ",").split(",")
-    folders = [p.strip() for p in raw_folders if p.strip()]
-    if not folders:
-        return "drive fail | ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS empty", False
-    folder_id = folders[0]
-    try:
-        service = drive_client.build_drive_v3_service(cred)
-        rows = drive_client.list_children(service, folder_id, page_size=min(s.drive_max_list, 50))
-        gap_rows = [r for r in rows if "gap" in r["name"].lower()]
-        if not gap_rows:
-            names = ", ".join(r["name"] for r in rows[:8])
-            return (
-                f"drive listed folder=<{folder_id}> files={len(rows)} | "
-                f"no filename containing 'gap' (first names: {names or '(none)'})",
-                True,
-            )
-        target = gap_rows[0]
-        fid, name, mime = target["id"], target["name"], target["mimeType"]
-        meta = drive_client.get_file_metadata(service, fid)
-        raw_files = s.drive_allowed_file_ids.replace("\n", ",").split(",")
-        allowed_f = {p.strip() for p in raw_files if p.strip()}
-        parents_ok = drive_client.parents_allowlisted(meta, set(folders))
-        files_ok = drive_client.file_id_allowlisted(fid, allowed_f)
-        if not (parents_ok or files_ok):
-            return f"drive fail | file=<{name}> not allowlisted by parent or file id list", False
-        body = drive_client.export_file_text(service, fid, mime)
-        preview = (body[:800] + "…") if len(body) > 800 else body
-        preview_one_line = preview.replace("\n", " ")[:400]
-        return (
-            f"drive read gap-related file name=<{name!r}> id=<{fid}> mime=<{mime}> "
-            f"preview=<{preview_one_line}>",
-            True,
-        )
-    except Exception as exc:
-        detail = str(exc).replace("\n", " ")[:320]
-        hint = ""
-        low = detail.lower()
-        if "accessnotconfigured" in low or "has not been used" in low or "403" in detail:
-            hint = (
-                " | fix: Google Cloud Console APIs and Services enable Drive API for the "
-                "project that owns this service account, then retry after a few minutes"
-            )
-        return f"drive fail | exc_type={type(exc).__name__} detail=<{detail}>{hint}", False
 
 
 def _notion_discovery() -> tuple[str, bool]:
@@ -156,8 +98,7 @@ def main() -> int:
     for label, fn in (
         ("1_repo_gap_prompt", lambda: (_in_repo_gap_prompt(), True)),
         ("2_perplexity", _perplexity_line),
-        ("3_drive_gap_file", _drive_gap_doc),
-        ("4_notion_discover", _notion_discovery),
+        ("3_notion_discover", _notion_discovery),
     ):
         msg, ok = fn()
         print(f"[{label}] {msg}")

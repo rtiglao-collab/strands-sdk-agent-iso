@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
+from pathlib import Path
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -15,9 +17,72 @@ from iso_agent.l1_router.context import inbound_dm
 from iso_agent.l2_user import UserScope
 from iso_agent.l3_runtime.agents import create_neuuf_coordinator_agent
 from iso_agent.l3_runtime.cli import RichAgentConsoleCallback
+from iso_agent.config import get_settings
 from iso_agent.l3_runtime.integrations.notion_mcp import (
     consume_coordinator_reload_after_notion_mcp_oauth,
 )
+
+
+def _env_file_assigns_key(env_path: Path, key: str) -> bool:
+    """True if ``key`` appears as ``key=...`` on an uncommented line in ``env_path``."""
+    if not env_path.is_file():
+        return False
+    try:
+        text = env_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    for line in text.splitlines():
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        if "=" not in s:
+            continue
+        k, _, _ = s.partition("=")
+        if k.strip() == key:
+            return True
+    return False
+
+
+def _apply_neuuf_cli_google_workspace_defaults() -> None:
+    """Use Workspace MCP stdio + verbose MCP logs for local CLI unless env or ``.env`` already set them."""
+    env_path = Path.cwd() / ".env"
+    transport = "ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT"
+    debug = "ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG"
+    if transport not in os.environ and not _env_file_assigns_key(env_path, transport):
+        os.environ[transport] = "stdio"
+    if debug not in os.environ and not _env_file_assigns_key(env_path, debug):
+        os.environ[debug] = "true"
+    get_settings.cache_clear()
+
+
+_MCP_DEBUG_LOGGERS_CONFIGURED = "_iso_agent_google_workspace_mcp_debug_handlers"
+
+
+def _maybe_enable_google_workspace_mcp_debug_logging() -> None:
+    """Attach stderr DEBUG handlers only to Strands/MCP loggers (never root DEBUG).
+
+    Raising the root logger to DEBUG pulls in botocore, urllib3, markdown_it, etc., and can
+    print AWS SigV4 signing material on stderr — avoid that.
+    """
+    raw = os.environ.get("ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG", "").strip().lower()
+    if raw not in ("1", "true", "yes"):
+        return
+    fmt = logging.Formatter("%(levelname)s %(name)s | %(message)s")
+    for name in (
+        "strands.tools.mcp",
+        "mcp",
+        "iso_agent.l3_runtime.integrations.google_workspace_mcp",
+    ):
+        log = logging.getLogger(name)
+        if getattr(log, _MCP_DEBUG_LOGGERS_CONFIGURED, False):
+            continue
+        setattr(log, _MCP_DEBUG_LOGGERS_CONFIGURED, True)
+        log.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(fmt)
+        log.addHandler(handler)
+        log.propagate = False
 
 
 def _format_agent_runtime_error(exc: Exception) -> str:
@@ -95,6 +160,8 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+    _apply_neuuf_cli_google_workspace_defaults()
+    _maybe_enable_google_workspace_mcp_debug_logging()
 
     if args.notion_mcp_login:
         from iso_agent.l3_runtime.integrations.notion_mcp import run_notion_mcp_interactive_login

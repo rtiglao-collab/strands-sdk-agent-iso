@@ -65,3 +65,22 @@ def test_coordinator_merges_google_workspace_mcp_tool_list(
     monkeypatch.setattr(coord, "get_google_workspace_mcp_tools", lambda: [calculator])
     agent = build_neuuf_coordinator(_scope(), include_coding_tools=False)
     assert "calculator" in agent.tool_names
+
+
+def test_coordinator_has_no_legacy_drive_tool_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Neuuf coordinator must not expose removed REST Drive tool names."""
+
+    monkeypatch.setattr(coord, "get_google_workspace_mcp_tools", lambda: [calculator])
+
+    monkeypatch.setenv("ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT", "stdio")
+    get_settings.cache_clear()
+    agent = build_neuuf_coordinator(_scope(), include_coding_tools=False)
+    assert "calculator" in agent.tool_names
+    assert "drive_list_folder" not in agent.tool_names
+
+    monkeypatch.setenv("ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT", "disabled")
+    get_settings.cache_clear()
+    agent2 = build_neuuf_coordinator(_scope(), include_coding_tools=False)
+    assert "drive_list_folder" not in agent2.tool_names

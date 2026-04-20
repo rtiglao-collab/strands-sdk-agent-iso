@@ -57,19 +57,16 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 
 **Exit criteria:** Tests cover configured/disabled/fake client paths; `docs/CAPABILITIES.template.md` updated; README documents env vars.
 
-## Phase 3 — Google Drive (read-only first) **done**
+## Phase 3 — Google (Workspace MCP) **done**
 
-**Goal:** Coordinator gains **read-only** Drive tools: list allowlisted folders, export Google Docs/Sheets as text when parents (or explicit file ids) are allowlisted.
+**Goal:** Neuuf coordinator gains **Google file access** only via **Google Workspace MCP** (`google_workspace_mcp_*`, user OAuth, `stdio`).
 
 **Implemented:**
 
-- Optional extra **`pip install iso-agent[drive]`** (`google-api-python-client`, `google-auth`).
-- `src/iso_agent/l3_runtime/integrations/drive_client.py` — service account build, list children, metadata, export.
-- `src/iso_agent/l3_runtime/tools/drive_tools.py` — `drive_list_folder`, `drive_read_document` tools merged in **`team/coordinator.py`**.
-- Settings: `drive_enabled` (defaults **true**; set **`ISO_AGENT_DRIVE_ENABLED=false`** to opt out), `drive_allowed_folder_ids`, `drive_allowed_file_ids`, `drive_max_list`; credentials via **`GOOGLE_APPLICATION_CREDENTIALS`** (standard path to service account JSON).
-- **Allowlists required** before tools attach; no cross-folder reads without an allowlisted parent or file id.
+- `src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py` — stdio MCP client (`npx google-workspace-mcp serve`); **`team/coordinator.py`** merges **`google_workspace_mcp_*`** when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**.
+- **`iso-neuuf-coordinator`** defaults **`stdio`** + debug when unset (see README / **`docs/INTEGRATIONS_WALKTHROUGH.md`** §2).
 
-**Exit criteria:** Tests mock the Drive service; docs and capability template updated; sanitized errors on failures.
+**Exit criteria:** Workspace MCP wired on the coordinator; docs and capabilities aligned.
 
 ## Phase 4 — Notion QMS **done**
 

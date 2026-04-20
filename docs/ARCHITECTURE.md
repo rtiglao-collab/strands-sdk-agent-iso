@@ -68,9 +68,7 @@ For Strands behavior and conventions, use the **local SDK checkout** path and re
 
 **Phase 2 research:** Perplexity MCP lives in **`src/iso_agent/l3_runtime/integrations/perplexity.py`** and is wired into the researcher via **`l3_runtime/team/researcher_tool.py`** (aggregated in **`team/subagents.py`**; opt-in Docker; see README).
 
-**Phase 3 Drive:** Read-only tools in **`l3_runtime/tools/drive_tools.py`** with client helpers in **`l3_runtime/integrations/drive_client.py`**; merged on the **coordinator** `Agent` in **`l3_runtime/team/coordinator.py`**. Requires optional `iso-agent[drive]` install and allowlisted folder/file IDs (see README).
-
-**Google Workspace MCP (optional):** Stdio MCP client in **`l3_runtime/integrations/google_workspace_mcp.py`** (`npx google-workspace-mcp serve`, default **`--read-only`**); merged on the coordinator when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** (see **`docs/INTEGRATIONS_WALKTHROUGH.md`**). Separate from service-account **`drive_*`** tools.
+**Google Workspace MCP:** Stdio MCP client in **`l3_runtime/integrations/google_workspace_mcp.py`** (`npx google-workspace-mcp serve`, default **`--read-only`**); merged when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** (see **`docs/INTEGRATIONS_WALKTHROUGH.md`** §2). This is the **only** Google file integration on the Neuuf coordinator (user OAuth).
 
 **Phase 4 Notion:** QMS draft + read tools in **`l3_runtime/tools/notion_tools.py`**, backed by hosted **Notion MCP** via **`l3_runtime/integrations/notion_mcp.py`**, **`notion_mcp_runtime.py`**, and **`notion_mcp_oauth.py`**; **`notion_client.py`** supplies id/title helpers only. Allowlists are **env ∪ per-user persisted JSON** via **`l2_user/notion_allowlist_store.py`**. When **`ISO_AGENT_NOTION_TRANSPORT`** is `hybrid` (default) or `mcp_primary` and **`memory/users/.../notion/mcp_oauth.json`** exists, tools start an MCP session; local REPL can run OAuth via **`notion_mcp_oauth_interactive_login`** (`docs/NOTION_MCP.md`). Install `iso-agent[notion]` for optional scripts/helpers; read/create need OAuth plus allowlisted ids where applicable (see README).
 

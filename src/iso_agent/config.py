@@ -43,19 +43,6 @@ class Settings(BaseSettings):
     #: When transport is ``stdio``, append ``--read-only`` to ``serve`` (recommended).
     google_workspace_mcp_serve_read_only: bool = True
 
-    #: Google Drive read-only tools on the coordinator (Phase 3). Defaults ``true``; set
-    #: ``ISO_AGENT_DRIVE_ENABLED=false`` to omit Drive tools without changing allowlists.
-    drive_enabled: bool = True
-
-    #: Comma-separated Drive folder IDs that may be listed or used as parent allowlist.
-    drive_allowed_folder_ids: str = ""
-
-    #: Optional comma-separated file IDs readable even if parent checks differ.
-    drive_allowed_file_ids: str = ""
-
-    #: Max files returned by ``drive_list_folder`` (capped at 100).
-    drive_max_list: int = 25
-
     #: Notion QMS tools on the coordinator (Phase 4). Defaults ``true``; set
     #: ``ISO_AGENT_NOTION_ENABLED=false`` to omit Notion tools even when MCP OAuth is configured.
     notion_enabled: bool = True

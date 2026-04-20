@@ -1,8 +1,9 @@
-"""Google Workspace MCP (stdio via npx) — optional coordinator tools.
+"""Google Workspace MCP (stdio via npx) — Neuuf coordinator's only Google file integration.
 
 Spawns ``npx -y google-workspace-mcp serve`` (with ``--read-only`` by default).
 Requires Node/npm on ``PATH`` and prior ``npx google-workspace-mcp setup`` so
 OAuth tokens live under the user home directory (see ``docs/INTEGRATIONS_WALKTHROUGH.md``).
+When transport is ``disabled``, no ``google_workspace_mcp_*`` tools are registered.
 """
 
 from __future__ import annotations
@@ -66,7 +67,12 @@ def get_google_workspace_mcp_tools() -> list[Any] | None:
                 )
                 _client = None
                 return None
-            logger.info("google_workspace_mcp=ready tool_count=<%d>", len(tools))
+            logger.info(
+                "google_workspace_mcp=ready tool_count=<%d> home=<%s> cwd=<%s>",
+                len(tools),
+                os.environ.get("HOME", ""),
+                os.getcwd(),
+            )
             return list(tools)
         return list(_client.list_tools_sync())
 

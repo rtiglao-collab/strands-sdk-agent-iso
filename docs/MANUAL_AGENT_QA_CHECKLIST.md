@@ -23,18 +23,17 @@ Check the terminal for `Tool #N: <tool_name>` lines. Adjust placeholders (`<...>
 |-------|-----------|
 | LLM | **Bedrock only**: AWS creds + region; optional `ISO_AGENT_BEDROCK_MODEL_ID` / `ISO_AGENT_BEDROCK_REGION_NAME` |
 | Perplexity MCP | `PERPLEXITY_API_KEY` + `ISO_AGENT_PERPLEXITY_TRANSPORT=docker` + Docker running |
-| Drive | `GOOGLE_APPLICATION_CREDENTIALS` + allowlists (`ISO_AGENT_DRIVE_ENABLED` defaults **true**; set `false` to disable) |
-| Google Workspace MCP | `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio` + Node/npm; `npx google-workspace-mcp setup` once (user OAuth); default read-only `serve` |
+| Google Workspace MCP | **Required** for Google Drive/Sheets/Docs/etc.: `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio` + Node/npm; `npx google-workspace-mcp setup` once (user OAuth); default read-only `serve` |
 | Notion discovery | Notion MCP OAuth (`mcp_oauth.json`; discovery tool on by default; set `ISO_AGENT_NOTION_DISCOVERY_ENABLED=false` to hide) |
 | Notion strict read | `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS` and/or persisted allowlist via **`notion_allowlist_add_read_page`** |
 | Notion drafts | `ISO_AGENT_NOTION_ALLOWED_PARENT_IDS` and/or **`notion_allowlist_add_draft_parent`** |
 
-### Troubleshooting: “the model says a Notion/Drive tool is missing”
+### Troubleshooting: “the model says a Notion/Google tool is missing”
 
 | Symptom | Cause | Fix |
 |--------|--------|-----|
 | **`notion_read_page`** returns **`no_read_allowlist`** (or **`notion_create_qms_draft`** returns **`no_draft_parent_allowlist`**) | Merged allowlist (env **∪** `memory/users/.../notion/allowlist.json`) is empty for that channel. | Call **`notion_allowlist_add_read_page`** / **`notion_allowlist_add_draft_parent`** after **`notion_discover_connected_pages`** (if discovery is on), or set the `ISO_AGENT_NOTION_ALLOWED_*` env vars. |
-| `drive_list_folder` says **folder not allowlisted** | The folder id is not in `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` (or typo). | Add that folder id to the comma list, or use an id already in the list. Share the folder with the service account email. |
+| Model invents old **`drive_*`** tool names | This repo never registered REST Drive on the Neuuf coordinator; Google is **`google_workspace_mcp_*`** only. | Configure Workspace MCP (`stdio` + `npx google-workspace-mcp setup`); see `docs/INTEGRATIONS_WALKTHROUGH.md` §2. |
 | **Perplexity / web** never used | `ISO_AGENT_PERPLEXITY_TRANSPORT` defaults to **disabled** or Docker not running. | `export ISO_AGENT_PERPLEXITY_TRANSPORT=docker` and start Docker; keep `PERPLEXITY_API_KEY`. |
 | No **`google_workspace_mcp_*`** tools | Transport **`disabled`** (default), **`npx`**/setup missing, or startup failed (logs: `google_workspace_mcp=startup_failed`). | Set `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`, run `npx google-workspace-mcp setup`, ensure Node on `PATH`; see `docs/INTEGRATIONS_WALKTHROUGH.md`. |
 
@@ -151,18 +150,18 @@ Call audit_upcoming_reminders with within_days=180.
 
 ---
 
-## 6. Google Drive (when enabled)
+## 6. Google Workspace MCP
 
-**List folder**
-
-```
-Use drive_list_folder with folder id <ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS first id> and rely on the default list size. Print file names only.
-```
-
-**Read document**
+**Tool presence**
 
 ```
-Use drive_read_document with file id <Google Doc or Sheet id under your allowlist> and max_chars 5000. Return the first 1200 characters of exported text only.
+List tool names that start with google_workspace_mcp_ (if any) and say in one sentence whether Google Workspace MCP is available this session.
+```
+
+**Read (optional — use a real id the OAuth account can open)**
+
+```
+Use the appropriate google_workspace_mcp_* read tool for a Google Sheet or Doc the signed-in MCP account can access (paste your own link or id). Return the first 800 characters of content or the tool’s exact error text.
 ```
 
 ---
@@ -208,8 +207,8 @@ python scripts/run_integration_smoke.py
 
 ## Pass / fail quick notes
 
-- **Fail auth:** missing or wrong API keys / token / SA JSON path.
-- **Fail Drive allowlist:** `folder_not_allowlisted` or `file_not_allowlisted` — fix env IDs or share folder with SA email.
+- **Fail auth:** missing or wrong API keys / token / OAuth setup for Google or Notion.
+- **Fail Google MCP:** no `google_workspace_mcp_*` tools — enable `stdio`, run `npx google-workspace-mcp setup`, check logs for `google_workspace_mcp=startup_failed`.
 - **Fail Notion read:** `page_not_allowlisted` — add page id to merged read allowlist (`notion_allowlist_add_read_page` or `ISO_AGENT_NOTION_ALLOWED_PAGE_IDS`). That gate is **separate** from whether MCP can fetch the page; if discovery already lists the page, use **`notion_allowlist_add_read_page`** with that id.
 - **Fail Notion discovery empty:** connect pages to the integration in Notion UI.
 - **Perplexity:** if logs show startup failure, check Docker and `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`.

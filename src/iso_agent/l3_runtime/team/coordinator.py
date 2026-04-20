@@ -20,7 +20,6 @@ from iso_agent.l3_runtime.team.subagents import build_specialist_tools
 from iso_agent.l3_runtime.tools.audit_tools import build_audit_tools
 from iso_agent.l3_runtime.tools.calendar_tools import build_calendar_tools
 from iso_agent.l3_runtime.tools.coding_tools import build_coding_tools
-from iso_agent.l3_runtime.tools.drive_tools import build_drive_tools
 from iso_agent.l3_runtime.tools.gap_tools import build_gap_tools
 from iso_agent.l3_runtime.tools.notion_tools import build_notion_tools
 
@@ -68,7 +67,6 @@ def build_neuuf_coordinator(
         *build_gap_tools(scope),
         *build_calendar_tools(scope),
         *build_audit_tools(scope),
-        *build_drive_tools(scope),
         *(mcp_google or []),
         *build_notion_tools(scope),
         *oauth_tool,

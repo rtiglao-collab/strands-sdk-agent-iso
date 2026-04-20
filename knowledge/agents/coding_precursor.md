@@ -13,12 +13,18 @@ This block is **appended to the coordinator system prompt** whenever coding tool
 
 - Prefer **smallest change** that satisfies the user; match existing style and patterns in neighboring files.
 - **Do not** add large new dependencies or new top-level directories without an explicit human ask aligned with **`AGENTS.md`** / **`docs/ARCHITECTURE.md`**.
+- **New PyPI packages:** do not add arbitrary dependencies to **`pyproject.toml`** on your own. If the user explicitly asks to add a library to the product manifest, make the **smallest** change (optional extra group + version bounds) and mention **`python scripts/sync_repo_docs.py`** when the layout/extras list changes.
 - After substantive Python edits, the human (or CI) runs **`hatch test`** / **`ruff`** / **`mypy`** from repo root—mention that if you cannot run them yourself.
 
 ## 3. Before `python_repl`
 
 - Use the REPL for **short verification** or one-off inspection, not to replace **Notion**, **Drive**, or **MCP** tools.
 - Do not **`exec(open(...))`** arbitrary paths the user did not supply; prefer tools and paths under **`memory/`** or the checked-out repo.
+
+## 3.1 `ModuleNotFoundError` (missing pip packages)
+
+- Prefer **stdlib** when it covers the job (`csv`, `json`, `xml.etree`, `zipfile`, etc.).
+- For **Excel `.xlsx`**, the supported optional stack is **`openpyxl`** via the **`excel`** extra in **`pyproject.toml`** (see **`requirements-excel.txt`**). If import fails and the user’s task clearly needs spreadsheets, **do not** invent a substitute library—tell them once: from repo root, **`pip install -e ".[excel]"`** (or **`pip install -r requirements-excel.txt`**). When the user has **already** asked you to make the notebook/script work and installing deps is in scope, you may use **`shell`** from the **repo root** to run **`pip install -e ".[excel]"`** (needs network), then retry in **`python_repl`**. Do **not** `pip install` random PyPI names that are **not** already declared in **`pyproject.toml`** / **`requirements-*.txt`** without the user explicitly approving the package name.
 
 ## 4. After coding
 
