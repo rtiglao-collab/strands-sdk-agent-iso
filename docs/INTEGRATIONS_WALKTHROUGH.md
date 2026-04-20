@@ -1,4 +1,4 @@
-# Integrations walkthrough (Drive, Google Workspace MCP, Notion, Perplexity)
+# Integrations walkthrough (Google Workspace MCP, Notion, Perplexity)
 
 This document is an **operator guide**: what to create in each vendor console, which secrets to hold locally, and how to prove each integration works with the Neuuf coordinator (`iso-neuuf-coordinator`).
 
@@ -11,10 +11,9 @@ This document is an **operator guide**: what to create in each vendor console, w
 From the repo root with your venv active:
 
 ```bash
-pip install -e ".[dev,drive,notion]"
+pip install -e ".[dev,notion]"
 ```
 
-- **`[drive]`** — Google API client libraries for `drive_list_folder` / `drive_read_document`.
 - **`[notion]`** — `notion-client` for `notion_read_page` / `notion_create_qms_draft`.
 - **`[dev]`** — pytest, ruff, mypy, FastAPI stack used elsewhere.
 
@@ -68,72 +67,17 @@ iso-neuuf-coordinator --query "Use neuuf_researcher only. List the tool names th
 
 ---
 
-## 2. Google Drive (read-only tools)
+## 2. Google Workspace MCP (stdio — required for Google on Neuuf)
 
-**What it does:** **`drive_list_folder`** and **`drive_read_document`** on the coordinator, **allowlist-enforced** (folder IDs and optional file IDs). No write/delete APIs in this product path.
+**What it does:** For **Drive, Sheets, Docs, Gmail, Calendar**, and other Google workspace surfaces, the Neuuf coordinator **only** exposes prefixed **`google_workspace_mcp_*`** tools from the [`google-workspace-mcp`](https://www.npmjs.com/package/google-workspace-mcp) server when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**. This path uses **user OAuth** via the MCP wizard. There is **no** parallel REST **`drive_*`** integration on the coordinator.
 
-### 2.1 Acquire (Google Cloud)
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) and select or create a **project**.
-2. **APIs & Services → Library** → enable **Google Drive API**.
-3. **APIs & Services → Credentials → Create credentials → Service account.**
-   - Name it e.g. `iso-agent-drive-readonly`.
-   - Grant **no** broad owner roles; Drive access is via **sharing**, not IAM “Drive admin” (unless your org uses domain-wide delegation—this walkthrough uses **file/folder sharing** to the SA email, which is simpler).
-4. **Keys → Add key → JSON** → save the file to a **gitignored** path. Options:
-   - **Inside this clone (local dev):** `secrets/google/your-name.json` — see **`secrets/README.md`** (`*.json` under `secrets/` is ignored by git).
-   - **Outside the repo:** e.g. `~/secrets/iso-drive-sa.json`.
-
-### 2.2 Share content with the service account
-
-1. Open the JSON and find **`client_email`** (ends with `gserviceaccount.com`).
-2. In Google Drive UI, share the **folders** (and optionally specific files) your agent must read with that **client_email** (Viewer is enough).
-3. Collect **Folder ID** from the browser URL when the folder is open:
-   `https://drive.google.com/drive/folders/<FOLDER_ID>`
-   For a file:
-   `https://drive.google.com/file/d/<FILE_ID>/view`
-
-### 2.3 Environment variables
-
-```bash
-# Option A — key inside this clone (see secrets/README.md; *.json under secrets/ is gitignored):
-export GOOGLE_APPLICATION_CREDENTIALS="$PWD/secrets/google/<YOUR_SERVICE_ACCOUNT>.json"
-# Option B — key outside the repo:
-# export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/iso-drive-sa.json"
-
-# ISO_AGENT_DRIVE_ENABLED defaults true; omit or set false to disable Drive tools.
-# Comma-separated Google Drive folder IDs (allowlist). There is no ISO_AGENT_DRIVE_FOLDER_ID.
-export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='folder_id_one,folder_id_two'
-# Optional: allow reading specific files by ID even if parent logic differs
-# export ISO_AGENT_DRIVE_ALLOWED_FILE_IDS='file_id_one'
-# Optional:
-# export ISO_AGENT_DRIVE_MAX_LIST=25
-```
-
-### 2.4 Verify
-
-```bash
-iso-neuuf-coordinator --query "Use drive_list_folder on an allowlisted folder and print up to 5 file names."
-iso-neuuf-coordinator --query "Use drive_read_document on file ID <allowlisted file id> and return the first 400 characters of extracted text."
-```
-
-**Pass:** listing and read succeed for allowlisted IDs.
-**Fail:** permission or “not allowlisted” — fix sharing or env comma lists (no spaces unless your parser allows—use comma-separated IDs as in README).
-
-**Fail:** HTTP 403 / `accessNotConfigured` / “Google Drive API has not been used in project …” — the **Drive API is off** for the GCP project that owns this service account key. In Google Cloud Console: **APIs & Services → Library → Google Drive API → Enable**, wait a few minutes, retry.
-
----
-
-## 2.5 Google Workspace MCP (optional stdio)
-
-**What it does:** When **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**, the coordinator merges prefixed **`google_workspace_mcp_*`** tools from the [`google-workspace-mcp`](https://www.npmjs.com/package/google-workspace-mcp) server (Docs, Sheets, Drive, Gmail, Calendar, and more per upstream). This path uses **user OAuth** via the MCP wizard. It is **separate** from **`drive_*`** service-account REST tools (allowlisted folders/files).
-
-### 2.5.1 Machine prerequisites
+### 2.1 Machine prerequisites
 
 - **Node.js** and **npm** on **`PATH`** so **`npx`** works.
 
-### 2.5.2 One-time setup (order matters)
+### 2.2 One-time setup (order matters)
 
-The wizard expects an **OAuth 2.0 Client ID** JSON from Google Cloud (**Desktop app** type), not the service-account key used for **`drive_*`**.
+The wizard expects an **OAuth 2.0 Client ID** JSON from Google Cloud (**Desktop app** type), not a **service account** JSON key.
 
 1. **GCP — create the client file**
    In [Google Cloud Console](https://console.cloud.google.com/): pick a project → **APIs & Services → Library** → enable the APIs you need (the upstream wizard lists Docs, Drive, Sheets, Gmail, Calendar, Slides, Forms). Then **Credentials → Create credentials → OAuth client ID → Application type: Desktop** → download the JSON.
@@ -157,7 +101,7 @@ The wizard expects an **OAuth 2.0 Client ID** JSON from Google Cloud (**Desktop 
 
 Then set **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** and start **`iso-neuuf-coordinator`** so **`google_workspace_mcp_*`** tools load.
 
-### 2.5.3 Environment variables
+### 2.3 Environment variables
 
 ```bash
 export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio
@@ -171,11 +115,11 @@ To disable (default):
 export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=disabled
 ```
 
-### 2.5.4 First-run behavior
+### 2.4 First-run behavior
 
 On coordinator build, the process runs **`npx -y google-workspace-mcp serve`** (plus **`--read-only`** unless **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY=false`**). **`npx`** may download the package once (needs network).
 
-### 2.5.5 Verify
+### 2.5 Verify
 
 ```bash
 iso-neuuf-coordinator --query "List tool names that start with google_workspace_mcp_ (if any) and say in one sentence whether Google Workspace MCP is available."
@@ -184,7 +128,45 @@ iso-neuuf-coordinator --query "List tool names that start with google_workspace_
 **Pass:** tool list includes **`google_workspace_mcp_`** names and a short capability summary.
 **Fail:** logs show **`google_workspace_mcp=startup_failed`** — check Node/npm, completed **`setup`**, and network/npm allowlists.
 
-**Coexistence:** **`drive_*`** still loads from **`GOOGLE_APPLICATION_CREDENTIALS`** + allowlists when configured; **`google_workspace_mcp_*`** follows the MCP OAuth user. Prefer one path per task to avoid confusing duplicate access.
+**Coordinator Google tools:** To use Google from Neuuf, you **must** run **Workspace MCP** with **`stdio`** (default for **`iso-neuuf-coordinator`** when unset) and complete OAuth — **`google_workspace_mcp_*`** is the **only** Google file path. With **`disabled`**, there are **no** Google file tools.
+
+### 2.6 Doc vs Sheet vs Excel (identify type before reading)
+
+1. **Identify first:** From the user’s **full URL** or explicit wording, decide **Google Doc**, **Google Sheet**, or **Excel (`.xlsx`)** on Drive. Bare ids alone are ambiguous—**ask** or use an MCP **metadata** tool (if listed) before choosing a reader.
+2. **Sheets** (`https://docs.google.com/spreadsheets/d/<id>/...`) → **spreadsheet** / **Sheets** MCP read tools, **not** **read Google Doc**.
+3. **Docs** (`https://docs.google.com/document/d/<id>/...`) → **document** / **Doc** read tools.
+4. **Excel files on Drive** → **Excel**-oriented MCP read tools (not Docs API).
+5. If access still fails after the right tool, share with the **OAuth user** from **`accounts add`**, not a different Google account than the one bound to that label.
+
+### 2.7 Debug MCP tool failures (see the real error)
+
+Symptoms like **“not accessible”** from **`getDocumentInfo`** often mean the id is **not a Google Doc** (e.g. a **Sheet** or **Excel** file)—not Workspace “deny” on a correctly shared Doc.
+
+- **`iso-neuuf-coordinator`** applies **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** and **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG=true`** when neither **the process environment** nor an **uncommented** assignment in **`.env`** (cwd) sets them (local testing). With debug on, **stderr** shows only **Strands MCP** and **`iso_agent` Google Workspace MCP** integration lines (not Bedrock/botocore/markdown-it). To opt out: `export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=disabled` and/or `export ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG=false`, or set the same keys in **`.env`**.
+- Also run **`npx google-workspace-mcp status`** (and account list commands per upstream) outside the coordinator to confirm OAuth accounts.
+
+### 2.8 Browser can open the file, but **`getDocumentInfo`** / **`readGoogleDoc`** fail
+
+**This repo’s role:** The coordinator only spawns **`npx -y google-workspace-mcp serve`** with **`env=os.environ.copy()`** (same **`HOME`**, **`PATH`**, etc. as the Python process). It does **not** proxy Google APIs itself. Tool errors and messages like **“Document not found”** come from **upstream** + **Google’s APIs**, not from Strands allowlists.
+
+**Do not confuse transports:** Lines like **`mcp.client.streamable_http`** on stderr are from **Notion’s hosted MCP** (HTTP/SSE) in the same process. **Google Workspace MCP** here is **stdio only**—those HTTP lines are **not** the Google server reconnecting.
+
+**When both accounts “have access” in the browser but MCP says not found / not accessible:**
+
+1. **Wrong API for the id** — **`getDocumentInfo`** is **Google Docs only**. If the URL is **`/spreadsheets/d/`**, **`/presentation/`**, or **`/file/d/`** (Excel, PDF, …), the Docs API returns **not found** even though Drive sharing looks fine. Use **`getSpreadsheetInfo`** / **`readSpreadsheet`**, **`readPresentation`**, **`getExcelInfo`**, or **`searchDrive`** (per your tool list) after checking the link path.
+2. **`HOME` / token path** — OAuth files for **`npx google-workspace-mcp`** live under the user profile (see upstream **`setup`** output). If **`iso-neuuf-coordinator`** is launched from **Cursor, launchd, or a service** with a different **`HOME`** than the terminal where you ran **`accounts add`**, the child **`npx`** process may load **different or empty** tokens. Check the coordinator log line **`google_workspace_mcp=ready`** for **`home=`** and **`cwd=`** and compare to the shell where **`npx google-workspace-mcp status`** succeeds.
+3. **Label vs Google identity** — **`account`** in each tool is the **local label** from **`accounts add`**, not an email. Confirm **`listAccounts`** and upstream **`status`** show the same identities you use in the browser.
+4. **Shared drives / Workspace quirks** — Some upstream versions had edge cases for **Shared drives** or **converted** files; see the **`google-workspace-mcp`** repo’s troubleshooting and **`status --diagnose`** (or equivalent) if documented there.
+5. **API 403 vs “sharing”** — Upstream maps Google **403** to messages like **“permission denied”** or **“no read access.”** That is **not always** “Share with this email.” It can mean **OAuth consent / stale token**, **Workspace admin blocking the OAuth client**, or other policy. Run **`npx google-workspace-mcp status`** (and **`accounts`** / **`setup`** per upstream) from the **same** shell **`HOME`** as the coordinator log line **`google_workspace_mcp=ready`** shows.
+
+### 2.9 Sheet opens in the browser, but **`getSpreadsheetInfo`** / **`readSpreadsheet`** still say no access
+
+The API only sees the **Google identity tied to the OAuth token** for your label (e.g. **`neuuf-info`**). “I can open it” in Chrome is irrelevant if that window is signed in as **someone else**.
+
+1. **Resolve the exact Google identity** — In the coordinator, use **`google_workspace_mcp__listAccounts`** and read the **Email:** line for **`neuuf-info`** if present. From a shell: **`npx google-workspace-mcp accounts list`**. If **no email** is printed, run **`npx google-workspace-mcp accounts test-permissions neuuf-info`** (or re-complete OAuth for that label) so you know which user the token represents before fixing sharing.
+2. **Share the file to that email** — In the Sheet → **Share**, add **that** address (Viewer or Editor). Groups and “anyone with the link” do **not** substitute if your Workspace blocks link access for API clients or external users.
+3. **Wrong Chrome profile** — OAuth may have completed as **`bob@gmail.com`** while you usually use **`alice@company.com`** in the tab where the sheet works. Either share the sheet with **`bob`**, or remove **`neuuf-info`** and **`accounts add neuuf-info`** again while logged into Chrome as **`alice`**.
+4. **Prove Sheets API for that token** — **`npx google-workspace-mcp accounts test-permissions neuuf-info`**. If **Sheets** fails here, sharing alone will not fix it until OAuth, scopes, or **Workspace admin** policy (third-party API / Drive restrictions) is corrected.
 
 ---
 
@@ -271,7 +253,7 @@ See **`docs/NOTION_MCP.md`** for redirect URI defaults and the MCP ↔ **`notion
 
 **Legacy:** `NOTION_TOKEN` is only for **`tests/manual_notion_page_inspect.py`** and other ad-hoc REST debugging—not for the coordinator **`notion_*`** path.
 
-**Script:** `python scripts/run_integration_smoke.py` runs discovery + Drive gap-file probe + Perplexity config (no LLM).
+**Script:** `python scripts/run_integration_smoke.py` runs in-repo gap prompt check + Perplexity config + Notion discovery (no LLM). Google Drive REST is skipped (coordinator is MCP-only for Google).
 
 ---
 
@@ -290,12 +272,7 @@ Example **local dev** block for `~/.zshrc` or a sourced `~/iso-agent.env` (**do 
 export PERPLEXITY_API_KEY='pplx-...'
 export ISO_AGENT_PERPLEXITY_TRANSPORT=docker
 
-# Drive (optional)
-export GOOGLE_APPLICATION_CREDENTIALS="$HOME/secrets/iso-drive-sa.json"
-# ISO_AGENT_DRIVE_ENABLED defaults true; omit or set false to disable Drive tools.
-export ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS='...'
-
-# Google Workspace MCP (optional — user OAuth via npx google-workspace-mcp setup)
+# Google Workspace MCP (required for Google file tools — user OAuth via npx google-workspace-mcp setup)
 # export ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio
 
 # Notion (optional — OAuth via iso-notion-mcp-login; see docs/NOTION_MCP.md)
@@ -314,14 +291,13 @@ Reload: `source ~/iso-agent.env`, then `iso-neuuf-coordinator`.
 | Integration | Settings / env | Tools |
 |-------------|----------------|--------|
 | Perplexity | [`src/iso_agent/config.py`](../src/iso_agent/config.py) `perplexity_transport`; `PERPLEXITY_API_KEY` | [`src/iso_agent/l3_runtime/integrations/perplexity.py`](../src/iso_agent/l3_runtime/integrations/perplexity.py) → [`researcher_tool.py`](../src/iso_agent/l3_runtime/team/researcher_tool.py) |
-| Drive | `ISO_AGENT_DRIVE_*` in `Settings` | [`drive_tools.py`](../src/iso_agent/l3_runtime/tools/drive_tools.py) |
-| Google Workspace MCP | `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT`, `ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY`; Node **`npx`**; OAuth via **`npx google-workspace-mcp setup`** | [`google_workspace_mcp.py`](../src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py) → [`coordinator.py`](../src/iso_agent/l3_runtime/team/coordinator.py) |
+| Google Workspace MCP | `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT`, `ISO_AGENT_GOOGLE_WORKSPACE_MCP_SERVE_READ_ONLY`; Node **`npx`**; OAuth via **`npx google-workspace-mcp setup`** — **only** Google file path on the Neuuf coordinator | [`google_workspace_mcp.py`](../src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py) → [`coordinator.py`](../src/iso_agent/l3_runtime/team/coordinator.py) |
 | Notion | `ISO_AGENT_NOTION_*`, OAuth `mcp_oauth.json` (`docs/NOTION_MCP.md`); `NOTION_TOKEN` only for manual REST scripts | [`notion_tools.py`](../src/iso_agent/l3_runtime/tools/notion_tools.py), [`notion_mcp.py`](../src/iso_agent/l3_runtime/integrations/notion_mcp.py) |
 
 ---
 
 ## 6. Security reminders
 
-- Keep JSON key files, **`mcp_oauth.json`**, and any **`NOTION_TOKEN`** used for debugging **out of git**; use a secrets manager in production.
+- Keep OAuth / token files (**`mcp_oauth.json`**, Google MCP wizard output under your profile), and any **`NOTION_TOKEN`** used for debugging **out of git**; use a secrets manager in production.
 - **Allowlists** are intentional for **strict full-page reads** and **draft parents**; **discovery** lists whatever pages are already shared with the integration in Notion.
 - Rotate keys if leaked; update env on all hosts running `iso-chat-webhook` or workers.

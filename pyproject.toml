@@ -28,6 +28,10 @@ notion = [
     "notion-client>=2.2.1,<3.0.0",
 ]
 notion-mcp = []  # Hosted MCP: OAuth via stdlib+httpx (already pulled by mcp).
+# Spreadsheet reads in python_repl (.xlsx); optional — see requirements-excel.txt
+excel = [
+    "openpyxl>=3.1.0,<4.0.0",
+]
 chat = [
     "fastapi>=0.115.0,<1.0.0",
     "uvicorn[standard]>=0.27.0,<1.0.0",
@@ -78,6 +82,7 @@ module = [
     "fastapi.*",
     "uvicorn.*",
     "rich.*",
+    "openpyxl.*",
 ]
 ignore_missing_imports = true
 

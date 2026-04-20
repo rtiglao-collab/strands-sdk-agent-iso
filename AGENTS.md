@@ -17,7 +17,7 @@ Persistent rules live in **`.cursor/rules/`** (`.mdc` files). Cursor loads them 
 | `docs/NEUUF_ISO_PHASE_PLAN.md` | Phased roadmap (Drive, Notion, Chat, Perplexity, gap pipeline) |
 | `docs/INTEGRATIONS_WALKTHROUGH.md` | Operator steps to acquire credentials and env for Drive, Google Workspace MCP, Notion, Perplexity |
 | `references/STRANDS_SAMPLES.md` | Local samples repo path + map sample → Neuuf use case |
-| `src/iso_agent/l3_runtime/tools/drive_tools.py` | Phase 3 Drive read tools (allowlist + service account) |
+| `src/iso_agent/l3_runtime/tools/drive_tools.py` | Legacy REST Drive helpers — **unit tests only**; Neuuf Google is **Workspace MCP** (`google_workspace_mcp.py`) |
 | `src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py` | Optional coordinator **`google_workspace_mcp_*`** tools (`npx google-workspace-mcp serve`; user OAuth); see `docs/INTEGRATIONS_WALKTHROUGH.md` |
 | `src/iso_agent/l3_runtime/tools/notion_tools.py` + `l2_user/notion_allowlist_store.py` + `l2_user/notion_page_index_store.py` | Notion QMS draft + read (hosted **MCP** + OAuth); persisted index; **`notion_create_qms_draft_for_parent_title`** / **`notion_list_*`** reduce UUID pasting |
 | `src/iso_agent/l3_runtime/tools/coding_tools.py` | `strands_tools` coding stack; on by default, off for Google Chat (`include_coding_tools`) |

@@ -8,8 +8,7 @@ Replace bracketed sections and delete items that are not implemented. The runtim
 - [ ] Per-user memory root (`memory/users/<user_key>/`)
 - [x] **Phase 1 — Neuuf coordinator** (`ISO_AGENT_PRIMARY_MODE=neuuf` or `iso-neuuf-coordinator`): coordinator + four specialist tools (research, governance, gap analyst, comms); prompts under `knowledge/agents/`
 - [x] **Phase 2 — Perplexity MCP** (researcher): optional Docker `mcp/perplexity-ask` when `PERPLEXITY_API_KEY` + `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`; otherwise model-only researcher
-- [x] **Phase 3 — Google Drive read-only** (coordinator tools): service account + allowlisted folder/file ids; Docs/Sheets export as text
-- [x] **Google Workspace MCP (optional)** — coordinator **`google_workspace_mcp_*`** tools when `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio` + Node **`npx`** + `npx google-workspace-mcp setup` (user OAuth); default **`serve --read-only`**; see `docs/INTEGRATIONS_WALKTHROUGH.md`
+- [x] **Google Workspace MCP (required for Google)** — Neuuf coordinator reaches **Drive, Sheets, Docs, Gmail, Calendar**, etc. only via **`google_workspace_mcp_*`** (`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio` + Node **`npx`** + `npx google-workspace-mcp setup`, user OAuth); default **`serve --read-only`**; there is **no** REST **`drive_*`** path on the coordinator; see `docs/INTEGRATIONS_WALKTHROUGH.md` §2
 - [x] **Phase 4 — Notion QMS (draft + read)** — hosted Notion MCP (OAuth `mcp_oauth.json`); wrapped `notion_*` tools (`notion_discover_connected_pages`, `notion_read_page`, `notion_create_qms_draft`, allowlists); raw `notion_mcp_*` on coordinator
 - [x] **Phase 5 — Google Chat (HTTP webhook)** — `POST /google-chat` (FastAPI); DM vs shared-space prompt rules; optional `iso-agent[chat]`; secret header + env (see README)
 - [x] **Phase 6 — Gap pipeline** — `gap_append_record` / `gap_list_recent`; append-only `memory/users/<user_key>/gaps/gaps.jsonl`; handoff templates in `docs/templates/`

@@ -43,8 +43,8 @@ class Settings(BaseSettings):
     #: When transport is ``stdio``, append ``--read-only`` to ``serve`` (recommended).
     google_workspace_mcp_serve_read_only: bool = True
 
-    #: Google Drive read-only tools on the coordinator (Phase 3). Defaults ``true``; set
-    #: ``ISO_AGENT_DRIVE_ENABLED=false`` to omit Drive tools without changing allowlists.
+    #: Google Drive REST helpers (Phase 3). Used by ``drive_tools`` / tests only;
+    #: the Neuuf coordinator does **not** register ``drive_*`` tools.
     drive_enabled: bool = True
 
     #: Comma-separated Drive folder IDs that may be listed or used as parent allowlist.

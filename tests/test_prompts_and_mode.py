@@ -18,6 +18,10 @@ def test_neuuf_coordinator_prompt_mandates_natural_language_notion_flow() -> Non
     assert "natural-language notion creates" in text.lower()
     assert "notion_bootstrap_draft_parent_choices" in text
     assert "confirm-before-write" in text.lower()
+    assert "tool not found in registry" in text.lower()
+    assert "spreadsheet" in text.lower()
+    assert "file type first" in text.lower()
+    assert "iso_agent_google_workspace_mcp_debug" in text.lower().replace("-", "_")
 
 
 def test_primary_mode_demo_default() -> None:

@@ -20,7 +20,7 @@ Then commit this file. Pre-commit runs `sync_repo_docs.py --check`.
 
 ## Optional dependency groups
 
-`chat`, `dev`, `drive`, `notion`, `notion-mcp`, `openai`
+`chat`, `dev`, `drive`, `excel`, `notion`, `notion-mcp`, `openai`
 
 ## Package tree (`src/iso_agent/`)
 

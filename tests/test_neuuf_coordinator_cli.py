@@ -2,13 +2,28 @@
 
 from __future__ import annotations
 
+import os
 import sys
+from pathlib import Path
 
 import pytest
 from strands.handlers.callback_handler import PrintingCallbackHandler
 
+from iso_agent.config import Settings, get_settings
 from iso_agent.l3_runtime.cli import RichAgentConsoleCallback
 from iso_agent.scripts import neuuf_coordinator_cli as cli
+
+
+@pytest.fixture(autouse=True)
+def _neuuf_cli_reset_google_workspace_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT", raising=False)
+    monkeypatch.delenv("ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG", raising=False)
+    get_settings.cache_clear()
+    yield
+    # ``main()`` assigns these via ``os.environ``; pop so other test modules see a clean env.
+    os.environ.pop("ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT", None)
+    os.environ.pop("ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG", None)
+    get_settings.cache_clear()
 
 
 def test_print_agent_result_skips_rich_callback(capsys: pytest.CaptureFixture[str]) -> None:
@@ -17,6 +32,27 @@ def test_print_agent_result_skips_rich_callback(capsys: pytest.CaptureFixture[st
 
     cli._print_agent_result(_Agent(), "duplicate")
     assert "duplicate" not in capsys.readouterr().out
+
+
+def test_neuuf_cli_google_workspace_defaults_when_unset(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    cli._apply_neuuf_cli_google_workspace_defaults()
+    assert os.environ["ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT"] == "stdio"
+    assert os.environ["ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG"] == "true"
+
+
+def test_neuuf_cli_google_workspace_defaults_skip_when_dotenv_sets_transport(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text(
+        "ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=disabled\n", encoding="utf-8"
+    )
+    cli._apply_neuuf_cli_google_workspace_defaults()
+    assert "ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT" not in os.environ
+    assert Settings().google_workspace_mcp_transport == "disabled"
 
 
 def test_neuuf_cli_one_shot_query(

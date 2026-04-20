@@ -1,0 +1,5 @@
+# Optional: read/write .xlsx from the coordinator python_repl.
+# Declared in pyproject.toml as extra "excel". From repo root with venv active:
+#   pip install -e ".[excel]"
+# Or install only these pins:
+openpyxl>=3.1.0,<4.0.0

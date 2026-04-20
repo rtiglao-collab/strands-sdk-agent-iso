@@ -41,6 +41,7 @@ strands-sdk-agent-iso/
 cd /Users/Rj/strands-sdk-agent-iso
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+# Optional: .xlsx in python_repl — pip install -e ".[excel]" (see requirements-excel.txt)
 pre-commit install
 python scripts/sync_repo_docs.py
 ```
@@ -87,19 +88,13 @@ See **`.cursor/rules/*.mdc`** and **`AGENTS.md`** for discovery-first review, sc
 
 **Bootstrap record:** **`docs/INITIAL_SETUP.md`** summarizes what was built initially and ends with an **LLM prompt** you can reuse to recreate the same setup elsewhere.
 
-**Neuuf / ISO roadmap:** **`docs/NEUUF_ISO_PHASE_PLAN.md`** (phases for Drive, Notion, Google Chat, Perplexity, gap pipeline). **Samples map:** **`references/STRANDS_SAMPLES.md`** (`/Users/Rj/sdk-python/samples`).
+**Neuuf / ISO roadmap:** **`docs/NEUUF_ISO_PHASE_PLAN.md`** (phases for Google integrations, Notion, Google Chat, Perplexity, gap pipeline). **Samples map:** **`references/STRANDS_SAMPLES.md`** (`/Users/Rj/sdk-python/samples`).
 
-**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step Drive, Notion, and Perplexity; Chat remains in this README when you deploy ingress. Quick probe (no LLM): **`python scripts/run_integration_smoke.py`** (Drive gap-named file, Notion discovery, Perplexity config, in-repo gap prompt path).
+**Integrations (acquire keys, env, verify):** **`docs/INTEGRATIONS_WALKTHROUGH.md`** — step-by-step **Google Workspace MCP** (only Google file path on Neuuf), Notion, and Perplexity; Chat remains in this README when you deploy ingress. Quick probe (no LLM): **`python scripts/run_integration_smoke.py`** (Notion discovery, Perplexity config, in-repo gap prompt path; Google covered by Workspace MCP setup outside the script).
 
 **Perplexity (Phase 2):** set `PERPLEXITY_API_KEY` and `ISO_AGENT_PERPLEXITY_TRANSPORT=docker`, with Docker running, so the **researcher** sub-agent loads the `mcp/perplexity-ask` image (same pattern as `samples/.../05-personal-assistant/search_assistant.py`). Default transport is `disabled` so environments without Docker stay safe.
 
-**Google Drive (Phase 3):** `pip install iso-agent[drive]`, set `GOOGLE_APPLICATION_CREDENTIALS` to a **service account JSON** with **Drive read-only** access. Drive tools are **enabled by default** (`ISO_AGENT_DRIVE_ENABLED` defaults **true**; set **`false`** to disable). Then configure:
-
-- `ISO_AGENT_DRIVE_ALLOWED_FOLDER_IDS` — comma-separated folder IDs (listing + parent checks)
-- Optional `ISO_AGENT_DRIVE_ALLOWED_FILE_IDS` — extra file IDs allowed for `drive_read_document`
-- Optional `ISO_AGENT_DRIVE_MAX_LIST` (default 25, max 100)
-
-The Neuuf coordinator gains **`drive_list_folder`**, **`drive_list_files`** (alias for the same list call), and **`drive_read_document`** tools (allowlist-enforced).
+**Google Workspace MCP (`stdio`):** Google **Drive, Sheets, Docs, Gmail, Calendar**, etc. on the Neuuf coordinator are **only** available through **`google_workspace_mcp_*`** (user OAuth via **`npx google-workspace-mcp setup`**; see **`docs/INTEGRATIONS_WALKTHROUGH.md`** §2). There is **no** REST **`drive_*`** path. **`iso-neuuf-coordinator`** sets **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** and **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_DEBUG=true`** when neither the shell nor an uncommented **`.env`** (cwd) line sets them (MCP-related stderr only, not Bedrock/botocore); set **`disabled`** / **`false`** only if you intentionally want **no** Google file tools for that process.
 
 **Notion QMS (Phase 4):** `pip install iso-agent[notion]` (helpers / manual scripts). Coordinator **`notion_*`** tools use **hosted Notion MCP** after OAuth: run **`iso-notion-mcp-login`** or **`notion_mcp_oauth_interactive_login`** in the REPL so `memory/users/<user_key>/notion/mcp_oauth.json` exists. Set **`ISO_AGENT_NOTION_ENABLED=false`** to disable them. Set **`ISO_AGENT_NOTION_TRANSPORT=rest_only`** to skip Notion tools entirely.
 
