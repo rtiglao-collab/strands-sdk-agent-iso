@@ -10,8 +10,4 @@ Neuuf reaches Google **only** through **Google Workspace MCP** (user OAuth, **`n
 
 You **may** store a **Desktop OAuth client** JSON here if you want it gitignored, but the upstream wizard defaults to **`~/.google-mcp/credentials.json`**.
 
-## Google — service account JSON (unit tests only)
-
-`GOOGLE_APPLICATION_CREDENTIALS` and **`drive_client` / `drive_tools`** are for **local unit tests** of legacy REST helpers only—they are **not** used by the Neuuf coordinator. If you run those tests, place a key under `secrets/google/<name>.json` and export the path; see **`docs/ENV_AND_SECRETS_INVENTORY.md`**.
-
 **Production:** use your platform’s secret manager or a mounted secret — do not rely on copying this folder layout into prod.

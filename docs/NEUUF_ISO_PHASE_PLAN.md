@@ -57,17 +57,16 @@ Layered repo, Cursor rules, pre-commit, gitleaks, `sync_repo_docs.py`, `referenc
 
 **Exit criteria:** Tests cover configured/disabled/fake client paths; `docs/CAPABILITIES.template.md` updated; README documents env vars.
 
-## Phase 3 — Google (Workspace MCP) **done**; legacy Drive REST **tests only**
+## Phase 3 — Google (Workspace MCP) **done**
 
-**Goal (current product):** Neuuf coordinator gains **Google file access only** via **Google Workspace MCP** (`google_workspace_mcp_*`, user OAuth, `stdio`). No REST **`drive_*`** on the coordinator.
+**Goal:** Neuuf coordinator gains **Google file access** only via **Google Workspace MCP** (`google_workspace_mcp_*`, user OAuth, `stdio`).
 
 **Implemented:**
 
-- `src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py` — stdio MCP client (`npx google-workspace-mcp serve`); **`team/coordinator.py`** merges **`google_workspace_mcp_*`** when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`** (only Google file path on Neuuf).
+- `src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py` — stdio MCP client (`npx google-workspace-mcp serve`); **`team/coordinator.py`** merges **`google_workspace_mcp_*`** when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**.
 - **`iso-neuuf-coordinator`** defaults **`stdio`** + debug when unset (see README / **`docs/INTEGRATIONS_WALKTHROUGH.md`** §2).
-- Legacy (tests only): optional **`pip install iso-agent[drive]`**; `drive_client.py` + `drive_tools.py` + `ISO_AGENT_DRIVE_*` / **`GOOGLE_APPLICATION_CREDENTIALS`** — **not** merged on the coordinator; **`tests/test_drive_tools.py`** mocks the Drive API.
 
-**Exit criteria:** Workspace MCP wired on the coordinator; Drive REST covered by unit tests only; docs and capabilities aligned.
+**Exit criteria:** Workspace MCP wired on the coordinator; docs and capabilities aligned.
 
 ## Phase 4 — Notion QMS **done**
 

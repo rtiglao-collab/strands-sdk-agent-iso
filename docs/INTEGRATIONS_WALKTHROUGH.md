@@ -69,7 +69,7 @@ iso-neuuf-coordinator --query "Use neuuf_researcher only. List the tool names th
 
 ## 2. Google Workspace MCP (stdio — required for Google on Neuuf)
 
-**What it does:** For **Drive, Sheets, Docs, Gmail, Calendar**, and other Google workspace surfaces, the Neuuf coordinator **only** exposes prefixed **`google_workspace_mcp_*`** tools from the [`google-workspace-mcp`](https://www.npmjs.com/package/google-workspace-mcp) server when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**. This path uses **user OAuth** via the MCP wizard. There is **no** parallel REST **`drive_*`** integration on the coordinator.
+**What it does:** For **Drive, Sheets, Docs, Gmail, Calendar**, and other Google workspace surfaces, the Neuuf coordinator exposes prefixed **`google_workspace_mcp_*`** tools from the [`google-workspace-mcp`](https://www.npmjs.com/package/google-workspace-mcp) server when **`ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`**. This path uses **user OAuth** via the MCP wizard.
 
 ### 2.1 Machine prerequisites
 
@@ -253,7 +253,7 @@ See **`docs/NOTION_MCP.md`** for redirect URI defaults and the MCP ↔ **`notion
 
 **Legacy:** `NOTION_TOKEN` is only for **`tests/manual_notion_page_inspect.py`** and other ad-hoc REST debugging—not for the coordinator **`notion_*`** path.
 
-**Script:** `python scripts/run_integration_smoke.py` runs in-repo gap prompt check + Perplexity config + Notion discovery (no LLM). Google Drive REST is skipped (coordinator is MCP-only for Google).
+**Script:** `python scripts/run_integration_smoke.py` runs in-repo gap prompt check + Perplexity config + Notion discovery (no LLM). Google is verified separately via this §2 checklist and **`iso-neuuf-coordinator`**.
 
 ---
 

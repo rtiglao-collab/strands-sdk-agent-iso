@@ -33,7 +33,7 @@ Check the terminal for `Tool #N: <tool_name>` lines. Adjust placeholders (`<...>
 | Symptom | Cause | Fix |
 |--------|--------|-----|
 | **`notion_read_page`** returns **`no_read_allowlist`** (or **`notion_create_qms_draft`** returns **`no_draft_parent_allowlist`**) | Merged allowlist (env **∪** `memory/users/.../notion/allowlist.json`) is empty for that channel. | Call **`notion_allowlist_add_read_page`** / **`notion_allowlist_add_draft_parent`** after **`notion_discover_connected_pages`** (if discovery is on), or set the `ISO_AGENT_NOTION_ALLOWED_*` env vars. |
-| Model mentions **`drive_list_folder`** / **`drive_read_document`** | Those REST tools are **not** on the Neuuf coordinator; Google is **`google_workspace_mcp_*`** only. | Configure Workspace MCP (`stdio` + `npx google-workspace-mcp setup`); see `docs/INTEGRATIONS_WALKTHROUGH.md` §2. |
+| Model invents old **`drive_*`** tool names | This repo never registered REST Drive on the Neuuf coordinator; Google is **`google_workspace_mcp_*`** only. | Configure Workspace MCP (`stdio` + `npx google-workspace-mcp setup`); see `docs/INTEGRATIONS_WALKTHROUGH.md` §2. |
 | **Perplexity / web** never used | `ISO_AGENT_PERPLEXITY_TRANSPORT` defaults to **disabled** or Docker not running. | `export ISO_AGENT_PERPLEXITY_TRANSPORT=docker` and start Docker; keep `PERPLEXITY_API_KEY`. |
 | No **`google_workspace_mcp_*`** tools | Transport **`disabled`** (default), **`npx`**/setup missing, or startup failed (logs: `google_workspace_mcp=startup_failed`). | Set `ISO_AGENT_GOOGLE_WORKSPACE_MCP_TRANSPORT=stdio`, run `npx google-workspace-mcp setup`, ensure Node on `PATH`; see `docs/INTEGRATIONS_WALKTHROUGH.md`. |
 

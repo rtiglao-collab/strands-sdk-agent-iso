@@ -20,7 +20,7 @@ Then commit this file. Pre-commit runs `sync_repo_docs.py --check`.
 
 ## Optional dependency groups
 
-`chat`, `dev`, `drive`, `excel`, `notion`, `notion-mcp`, `openai`
+`chat`, `dev`, `excel`, `notion`, `notion-mcp`, `openai`
 
 ## Package tree (`src/iso_agent/`)
 
@@ -49,7 +49,6 @@ iso_agent/
 │   │   └── rich_agent_callback.py
 │   ├── integrations
 │   │   ├── __init__.py
-│   │   ├── drive_client.py
 │   │   ├── google_workspace_mcp.py
 │   │   ├── notion_client.py
 │   │   ├── notion_mcp.py
@@ -70,7 +69,6 @@ iso_agent/
 │   │   ├── audit_tools.py
 │   │   ├── calendar_tools.py
 │   │   ├── coding_tools.py
-│   │   ├── drive_tools.py
 │   │   ├── gap_tools.py
 │   │   └── notion_tools.py
 │   ├── __init__.py
@@ -168,7 +166,6 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/l3_runtime/cli/rich_agent_callback.py`
 - `src/iso_agent/l3_runtime/default_model.py`
 - `src/iso_agent/l3_runtime/integrations/__init__.py`
-- `src/iso_agent/l3_runtime/integrations/drive_client.py`
 - `src/iso_agent/l3_runtime/integrations/google_workspace_mcp.py`
 - `src/iso_agent/l3_runtime/integrations/notion_client.py`
 - `src/iso_agent/l3_runtime/integrations/notion_mcp.py`
@@ -189,7 +186,6 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `src/iso_agent/l3_runtime/tools/audit_tools.py`
 - `src/iso_agent/l3_runtime/tools/calendar_tools.py`
 - `src/iso_agent/l3_runtime/tools/coding_tools.py`
-- `src/iso_agent/l3_runtime/tools/drive_tools.py`
 - `src/iso_agent/l3_runtime/tools/gap_tools.py`
 - `src/iso_agent/l3_runtime/tools/notion_tools.py`
 - `src/iso_agent/mcp/__init__.py`
@@ -207,7 +203,6 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `tests/test_coordinator_coding_precursor.py`
 - `tests/test_coordinator_coding_tools.py`
 - `tests/test_default_model.py`
-- `tests/test_drive_tools.py`
 - `tests/test_gap_store.py`
 - `tests/test_gap_tools.py`
 - `tests/test_google_chat_app.py`
@@ -223,5 +218,6 @@ Key application, docs, guardrails, and references (from `git ls-files` when avai
 - `tests/test_perplexity.py`
 - `tests/test_phase7_calendar_audit.py`
 - `tests/test_prompts_and_mode.py`
+- `tests/test_pyproject_optional_extras.py`
 - `tests/test_rich_agent_callback.py`
 - `tests/test_sync_repo_docs.py`

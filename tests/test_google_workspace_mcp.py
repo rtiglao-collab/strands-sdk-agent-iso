@@ -67,10 +67,10 @@ def test_coordinator_merges_google_workspace_mcp_tool_list(
     assert "calculator" in agent.tool_names
 
 
-def test_coordinator_never_registers_rest_drive_tools(
+def test_coordinator_has_no_legacy_drive_tool_names(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Neuuf coordinator does not merge REST drive_*; Google is Workspace MCP only."""
+    """Neuuf coordinator must not expose removed REST Drive tool names."""
 
     monkeypatch.setattr(coord, "get_google_workspace_mcp_tools", lambda: [calculator])
 

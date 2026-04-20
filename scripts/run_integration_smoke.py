@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live integration smoke: Perplexity, Notion discovery (Google via Workspace MCP — configure separately).
+"""Live integration smoke: in-repo gap prompt, Perplexity, Notion discovery (no LLM).
 
 Run from the repo root with secrets in the environment or a local ``.env`` file::
 
@@ -35,16 +35,6 @@ def _perplexity_line() -> tuple[str, bool]:
         f"mcp_ready=<{ok}> | researcher can attach Perplexity MCP when all true"
     )
     return msg, ok or transport == "disabled"
-
-
-def _drive_rest_skipped() -> tuple[str, bool]:
-    """Coordinator uses Google Workspace MCP only; no REST Drive smoke here."""
-
-    return (
-        "google | smoke script does not probe Workspace MCP; configure per "
-        "docs/INTEGRATIONS_WALKTHROUGH.md §2 (stdio + npx google-workspace-mcp setup)",
-        True,
-    )
 
 
 def _notion_discovery() -> tuple[str, bool]:
@@ -108,8 +98,7 @@ def main() -> int:
     for label, fn in (
         ("1_repo_gap_prompt", lambda: (_in_repo_gap_prompt(), True)),
         ("2_perplexity", _perplexity_line),
-        ("3_drive_rest_skipped", _drive_rest_skipped),
-        ("4_notion_discover", _notion_discovery),
+        ("3_notion_discover", _notion_discovery),
     ):
         msg, ok = fn()
         print(f"[{label}] {msg}")

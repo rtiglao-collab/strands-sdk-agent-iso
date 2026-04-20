@@ -4,7 +4,7 @@ Before adding new markdown under `docs/`, check whether **`docs/ARCHITECTURE.md`
 
 Strands implementation patterns: **`references/STRANDS_SDK.md`** holds the **local `sdk-python` checkout path** and reading order—update only there if the clone moves.
 
-Neuuf / ISO roadmap and sample mapping: **`docs/NEUUF_ISO_PHASE_PLAN.md`**, **`references/STRANDS_SAMPLES.md`**. Perplexity MCP: **`src/iso_agent/l3_runtime/integrations/perplexity.py`**. Google (Neuuf): **`integrations/google_workspace_mcp.py`** → **`team/coordinator.py`** (Workspace MCP only). Legacy Drive REST tests: **`integrations/drive_client.py`**, **`tools/drive_tools.py`**. Notion QMS: **`integrations/notion_client.py`**, **`tools/notion_tools.py`**.
+Neuuf / ISO roadmap and sample mapping: **`docs/NEUUF_ISO_PHASE_PLAN.md`**, **`references/STRANDS_SAMPLES.md`**. Perplexity MCP: **`src/iso_agent/l3_runtime/integrations/perplexity.py`**. Google (Neuuf): **`integrations/google_workspace_mcp.py`** → **`team/coordinator.py`**. Notion QMS: **`integrations/notion_client.py`**, **`tools/notion_tools.py`**.
 
 ## Generated inventory (required)
 
